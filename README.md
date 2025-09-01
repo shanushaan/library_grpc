@@ -1,6 +1,6 @@
 # Library Management System
 
-A comprehensive microservices-based library management system built with modern technologies including gRPC backend, async FastAPI gateway, React frontend, and PostgreSQL database with advanced features like pagination, structured logging, and performance optimization.
+A comprehensive microservices-based library management system built with  gRPC backend, async FastAPI OR NODE gateway, React frontend, and PostgreSQL database with advanced features like pagination, structured logging, and performance optimization.
 
 ## 🚀 Key Features
 
@@ -40,36 +40,43 @@ A comprehensive microservices-based library management system built with modern 
 ## Architecture
 
 - **Backend**: gRPC service (Python)
-- **API Gateway**: FastAPI (Python)
+- **API Gateway**: FastAPI (Python) or Node ( JS)
 - **Frontend**: React.js
 - **Database**: PostgreSQL
 - **Orchestration**: Docker Compose
 
-## Quick Start
+## 🚀 Quick Start
 
 ### Prerequisites
-- Docker
-- Docker Compose
+- **Docker Desktop**: Latest version with Docker Compose
+- **Git**: For cloning the repository
+- **Ports Available**: 3000, 8001, 50051, 5432
 
 ### Installation
 
-1. Clone the repository:
+1. **Clone the repository:**
 ```bash
-git clone <your-repo-url>
-cd library-grpc-service
+git clone https://github.com/shanushaan/library_grpc.git
+cd library_grpc
 ```
 
-2. Start all services:
+2. **Choose API Gateway (Node.js recommended):**
 ```bash
-docker-compose up -d
+# Option A: Node.js Gateway (Recommended)
+docker-compose --profile node up -d
+
+# Option B: Python FastAPI Gateway
+docker-compose --profile python up -d
 ```
 
-3. Wait for all services to be healthy (about 30-60 seconds)
+3. **Wait for services to start** (30-60 seconds)
+   - Monitor with: `docker-compose ps`
+   - All services should show "Up" status
 
-4. Access the application:
-   - Frontend: http://localhost:3000
-   - API Gateway: http://localhost:8001
-   - API Documentation: http://localhost:8001/docs
+4. **Access the application:**
+   - **Frontend**: http://localhost:3000
+   - **API Gateway**: http://localhost:8001
+   - **API Documentation**: http://localhost:8001/docs (Python only)
 
 ### 🔑 Default Login Credentials
 
@@ -122,11 +129,12 @@ The system comes with comprehensive pre-populated data for immediate testing:
 - **27 Regular Users**: Standard borrowing privileges
 - **Realistic Data**: Proper names, emails, and activity history
 
-### Transactions (100+ records)
-- **Active Borrowings**: Currently borrowed books
-- **Returned Books**: Complete transaction history
-- **Overdue Items**: Books with accumulated fines
-- **Realistic Timeline**: Transactions spanning multiple months
+### Transactions (100 records)
+- **23 Active Borrowings**: 15 current + 8 overdue books
+- **77 Returned Books**: Complete transaction history
+- **Overdue Fines**: ₹10-₹320 accumulated fines
+- **Realistic Timeline**: 6+ months of library activity (July 2023 - February 2024)
+- **Transaction Types**: Borrow/Return with proper due dates and fine calculations
 
 ## Development
 
@@ -142,19 +150,49 @@ library-grpc-service/
 └── docker-compose.yml    # Service orchestration
 ```
 
-### Stopping Services
+### 🔧 Development Commands
+
+**Stop Services:**
 ```bash
 docker-compose down
 ```
 
-### Viewing Logs
+**View Logs:**
 ```bash
-docker-compose logs [service-name]
+# All services
+docker-compose logs
+
+# Specific service
+docker-compose logs frontend
+docker-compose logs api-gateway-node
+docker-compose logs grpc-server
 ```
 
-### Rebuilding Services
+**Rebuild Services:**
 ```bash
+# Rebuild all
+docker-compose build
+
+# Rebuild and restart
 docker-compose up --build -d
+```
+
+**Reset Database:**
+```bash
+# Remove volumes and restart
+docker-compose down -v
+docker-compose --profile node up -d
+```
+
+**Switch API Gateway:**
+```bash
+# Switch to Python gateway
+docker-compose down
+docker-compose --profile python up -d
+
+# Switch to Node.js gateway
+docker-compose down
+docker-compose --profile node up -d
 ```
 
 ## 🔌 API Endpoints
@@ -217,10 +255,10 @@ docker-compose up --build -d
 ## 🏗️ System Architecture
 
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   React Frontend │    │  FastAPI Gateway │    │   gRPC Server   │
-│   (Port 3000)    │◄──►│   (Port 8001)    │◄──►│   (Port 50051)  │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
+┌─────────────────┐    ┌────────────────────────┐    ┌─────────────────┐
+│   React Frontend │    │  FastAPI/Node Gateway │    │   gRPC Server   │
+│   (Port 3000)    │◄──►│   (Port 8001)        │◄──►(Port 50051)  │
+└─────────────────┘    └────────────────────────┘    └─────────────────┘
                                 │                        │
                                 │                        │
                                 ▼                        ▼
