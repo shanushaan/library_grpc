@@ -39,6 +39,7 @@ CREATE TABLE users (
 - `membership_date`: When user joined the library
 
 **Sample Data**: 30 users (3 admins, 27 regular users)
+**Default Passwords**: admin123, lib123, mgr123 (admins), user123 (most users), jane123, mike123
 
 ## 2. `books` Table
 **Purpose**: Store the library's book catalog with inventory tracking.
@@ -61,7 +62,9 @@ CREATE TABLE books (
 - `is_deleted`: Soft delete flag for books
 
 **Sample Data**: 104 unique books across 11 genres
-- Fiction, Science Fiction, Fantasy, Mystery, Romance, Young Adult, Non-Fiction, Biography, History, Self-Help, Classic Literature
+- Fiction (15), Science Fiction (10), Fantasy (10), Mystery/Thriller (10)
+- Romance (8), Non-Fiction (10), History/Biography (7), Young Adult (8)
+- Classic Literature (10), Contemporary Fiction (10), Poetry & Drama (6)
 
 ## 3. `transactions` Table
 **Purpose**: Track all book borrowing and return activities with fine calculations.
@@ -85,6 +88,10 @@ CREATE TABLE transactions (
 - `status`: 'BORROWED', 'RETURNED', 'OVERDUE'
 - `due_date`: 30 days from borrow date
 - `fine_amount`: ₹10 per day for overdue books
+
+**Sample Data**: 100 transactions
+- 15 current borrowings, 8 overdue books (with fines ₹10-₹320)
+- 77 returned books, realistic timeline (July 2023 - February 2024)
 
 **Business Rules**:
 - 30-day borrowing period
@@ -159,28 +166,33 @@ transactions (1) ──── (1) book_requests [optional]
 
 ### Performance Indexes
 ```sql
--- User lookups
-CREATE INDEX idx_users_username ON users(username);
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_role ON users(role);
+-- User indexes (4 total)
+CREATE INDEX idx_users_username ON users(username);        -- Login authentication
+CREATE INDEX idx_users_email ON users(email);              -- Email validation
+CREATE INDEX idx_users_role ON users(role);                -- Role filtering
+CREATE INDEX idx_users_active ON users(is_active);         -- Active user filtering
 
--- Book searches
-CREATE INDEX idx_books_title ON books(title);
-CREATE INDEX idx_books_author ON books(author);
-CREATE INDEX idx_books_genre ON books(genre);
-CREATE INDEX idx_books_not_deleted ON books(book_id) WHERE is_deleted = FALSE;
+-- Book indexes (4 total)
+CREATE INDEX idx_books_title ON books(title);              -- Primary search
+CREATE INDEX idx_books_author ON books(author);            -- Author search
+CREATE INDEX idx_books_genre ON books(genre);              -- Genre filtering
+CREATE INDEX idx_books_not_deleted ON books(book_id) WHERE is_deleted = FALSE; -- Active books
 
--- Transaction queries
-CREATE INDEX idx_transactions_user ON transactions(user_id);
-CREATE INDEX idx_transactions_book ON transactions(book_id);
-CREATE INDEX idx_transactions_status ON transactions(status);
-CREATE INDEX idx_transactions_date ON transactions(transaction_date);
+-- Transaction indexes (5 total)
+CREATE INDEX idx_transactions_user ON transactions(user_id);           -- User history
+CREATE INDEX idx_transactions_book ON transactions(book_id);           -- Book tracking
+CREATE INDEX idx_transactions_status ON transactions(status);          -- Status filtering
+CREATE INDEX idx_transactions_date ON transactions(transaction_date);  -- Chronological
+CREATE INDEX idx_transactions_due_date ON transactions(due_date);      -- Overdue detection
 
--- Request management
-CREATE INDEX idx_requests_user ON book_requests(user_id);
-CREATE INDEX idx_requests_status ON book_requests(status);
-CREATE INDEX idx_requests_date ON book_requests(request_date);
+-- Request indexes (4 total)
+CREATE INDEX idx_requests_user ON book_requests(user_id);      -- User requests
+CREATE INDEX idx_requests_book ON book_requests(book_id);      -- Book requests
+CREATE INDEX idx_requests_status ON book_requests(status);     -- Admin workflow
+CREATE INDEX idx_requests_date ON book_requests(request_date); -- FIFO processing
 ```
+
+**Total Indexes**: 17 strategic indexes for optimal query performance
 
 ## Data Integrity Rules
 
@@ -239,23 +251,20 @@ WHERE br.status = 'PENDING'
 ORDER BY br.request_date;
 ```
 
-## Migration History
+## Database Initialization
 
-### Database Initialization Sequence
-1. `01_init.sql` - Create tables and load all migrations
-2. `02_seed_data.sql` - Insert users and basic data
-3. `03_books_data.sql` - Insert book catalog
-4. `04_transactions_data.sql` - Insert transaction history
-5. `05_add_is_deleted.sql` - Add soft delete to books
-6. `06_fix_duplicate_borrows.sql` - Clean duplicate transactions
-7. `07_update_book_counts.sql` - Set realistic inventory (1-10 copies)
-8. `08_remove_duplicate_books.sql` - Remove duplicate books (208→104)
+### Single Initialization File
+- **File**: `00_complete_init.sql` - Complete database setup in one file
+- **Tables**: Creates all 4 tables with proper schema
+- **Data**: Loads 30 users, 104 books, 100 transactions, 6 sample requests
+- **Indexes**: Creates all performance indexes
+- **Verification**: Built-in data integrity checks
 
-### Data Cleanup Operations
-- **Duplicate Books**: Removed duplicates while preserving foreign key integrity
-- **Duplicate Transactions**: Cleaned up duplicate borrowing records
-- **Book Inventory**: Updated from binary (0/1) to realistic counts (1-10)
-- **Data Integrity**: All foreign keys properly maintained during cleanup
+### Data Quality
+- **No Duplicates**: Clean, unique data from initialization
+- **Realistic Inventory**: Books have 1-10 copies each
+- **Password Security**: SHA-256 hashed passwords with documented mappings
+- **Referential Integrity**: All foreign keys properly maintained
 
 ## Performance Considerations
 
