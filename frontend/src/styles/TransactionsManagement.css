@@ -1,0 +1,157 @@
+/* Transactions Management Styles */
+.transactions-table-container {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.transactions-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.transactions-table thead {
+  background: #f8f9fa;
+}
+
+.transactions-table th {
+  padding: 16px 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #495057;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.transactions-table td {
+  padding: 12px;
+  border-bottom: 1px solid #e9ecef;
+  vertical-align: middle;
+}
+
+.transactions-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.transaction-id-cell {
+  font-weight: 500;
+  color: #6c757d;
+  font-family: monospace;
+}
+
+.user-info, .book-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.type-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  background: #e9ecef;
+  color: #495057;
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.status-badge.borrowed {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-badge.returned {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-badge.overdue {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.status-badge.unknown {
+  background: #e2e3e5;
+  color: #6c757d;
+}
+
+.fine-amount {
+  color: #dc3545;
+  font-weight: 500;
+}
+
+.no-fine {
+  color: #28a745;
+  font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .transactions-table-container {
+    overflow-x: auto;
+  }
+  
+  .transactions-table {
+    min-width: 900px;
+  }
+  
+  .transactions-table th,
+  .transactions-table td {
+    padding: 8px 6px;
+  }
+}
+/* Pagination Styles */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.pagination-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid #d1d5db;
+  background: white;
+  color: #374151;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.pagination-count {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}

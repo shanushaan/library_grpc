@@ -1,0 +1,242 @@
+syntax = "proto3";
+
+package library;
+
+// Message definitions first
+message Book {
+  int32 book_id = 1;
+  string title = 2;
+  string author = 3;
+  string genre = 4;
+  int32 published_year = 5;
+  int32 available_copies = 6;
+  bool is_deleted = 7;
+}
+
+message User {
+  int32 user_id = 1;
+  string username = 2;
+  string email = 3;
+  string role = 4;
+  bool is_active = 5;
+}
+
+message Transaction {
+  int32 transaction_id = 1;
+  int32 member_id = 2;
+  int32 book_id = 3;
+  string transaction_type = 4;
+  string transaction_date = 5;
+  string due_date = 6;
+  string return_date = 7;
+  string status = 8;
+  double fine_amount = 9;
+}
+
+message BookRequest {
+  int32 request_id = 1;
+  int32 user_id = 2;
+  int32 book_id = 3;
+  string request_type = 4;
+  string status = 5;
+  string request_date = 6;
+  string notes = 7;
+}
+
+// Request/Response messages
+message GetBooksRequest {
+  string search_query = 1;
+}
+
+message GetBooksResponse {
+  repeated Book books = 1;
+}
+
+message GetBookRequest {
+  int32 book_id = 1;
+}
+
+message CreateBookRequest {
+  string title = 1;
+  string author = 2;
+  string genre = 3;
+  int32 published_year = 4;
+  int32 available_copies = 5;
+}
+
+message UpdateBookRequest {
+  int32 book_id = 1;
+  string title = 2;
+  string author = 3;
+  string genre = 4;
+  int32 published_year = 5;
+  int32 available_copies = 6;
+}
+
+message AuthRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message AuthResponse {
+  bool success = 1;
+  User user = 2;
+  string message = 3;
+}
+
+message GetUsersRequest {}
+
+message GetUsersResponse {
+  repeated User users = 1;
+}
+
+message IssueBookRequest {
+  int32 book_id = 1;
+  int32 member_id = 2;
+  int32 admin_id = 3;
+}
+
+message ReturnBookRequest {
+  int32 transaction_id = 1;
+  int32 admin_id = 2;
+}
+
+message TransactionResponse {
+  bool success = 1;
+  Transaction transaction = 2;
+  string message = 3;
+}
+
+message GetTransactionsRequest {
+  int32 user_id = 1;
+  string status = 2;
+}
+
+message GetTransactionsResponse {
+  repeated Transaction transactions = 1;
+}
+
+message CreateBookRequestReq {
+  int32 user_id = 1;
+  int32 book_id = 2;
+  string request_type = 3;
+  int32 transaction_id = 4;
+  string notes = 5;
+}
+
+message GetBookRequestsReq {
+  string status = 1;
+}
+
+message GetBookRequestsResponse {
+  repeated BookRequest requests = 1;
+}
+
+message ApproveBookRequestReq {
+  int32 request_id = 1;
+  int32 admin_id = 2;
+}
+
+message RejectBookRequestReq {
+  int32 request_id = 1;
+  int32 admin_id = 2;
+  string notes = 3;
+}
+
+message BookRequestResponse {
+  bool success = 1;
+  BookRequest request = 2;
+  string message = 3;
+}
+
+message UserStatsRequest {
+  int32 user_id = 1;
+}
+
+message UserStatsResponse {
+  int32 total_books_taken = 1;
+  int32 currently_borrowed = 2;
+  int32 overdue_books = 3;
+  double total_fine = 4;
+}
+
+message UserTransaction {
+  int32 transaction_id = 1;
+  int32 book_id = 2;
+  string book_title = 3;
+  string book_author = 4;
+  string transaction_type = 5;
+  string transaction_date = 6;
+  string due_date = 7;
+  string return_date = 8;
+  string status = 9;
+  double fine_amount = 10;
+}
+
+message GetUserTransactionsRequest {
+  int32 user_id = 1;
+  string status = 2;
+}
+
+message GetUserTransactionsResponse {
+  repeated UserTransaction transactions = 1;
+}
+
+message BookResponse {
+  bool success = 1;
+  Book book = 2;
+  string message = 3;
+}
+
+message CreateUserRequest {
+  string username = 1;
+  string email = 2;
+  string password = 3;
+  string role = 4;
+}
+
+message UpdateUserRequest {
+  int32 user_id = 1;
+  string username = 2;
+  string email = 3;
+  string role = 4;
+  bool is_active = 5;
+  string password = 6;
+}
+
+message UserResponse {
+  bool success = 1;
+  User user = 2;
+  string message = 3;
+}
+
+// Service definition after all messages
+service LibraryService {
+  // Book operations
+  rpc GetBooks(GetBooksRequest) returns (GetBooksResponse);
+  rpc GetBook(GetBookRequest) returns (Book);
+  rpc CreateBook(CreateBookRequest) returns (BookResponse);
+  rpc UpdateBook(UpdateBookRequest) returns (BookResponse);
+  rpc DeleteBook(GetBookRequest) returns (BookResponse);
+  
+  // User operations
+  rpc AuthenticateUser(AuthRequest) returns (AuthResponse);
+  rpc GetUsers(GetUsersRequest) returns (GetUsersResponse);
+  rpc CreateUser(CreateUserRequest) returns (UserResponse);
+  rpc UpdateUser(UpdateUserRequest) returns (UserResponse);
+  
+  // Transaction operations
+  rpc IssueBook(IssueBookRequest) returns (TransactionResponse);
+  rpc ReturnBook(ReturnBookRequest) returns (TransactionResponse);
+  rpc GetTransactions(GetTransactionsRequest) returns (GetTransactionsResponse);
+  
+  // Request operations
+  rpc CreateUserBookRequest(CreateBookRequestReq) returns (BookRequestResponse);
+  rpc GetBookRequests(GetBookRequestsReq) returns (GetBookRequestsResponse);
+  rpc ApproveBookRequest(ApproveBookRequestReq) returns (BookRequestResponse);
+  rpc RejectBookRequest(RejectBookRequestReq) returns (BookRequestResponse);
+  
+  // User dashboard operations
+  rpc GetUserStats(UserStatsRequest) returns (UserStatsResponse);
+  rpc GetUserTransactions(GetUserTransactionsRequest) returns (GetUserTransactionsResponse);
+}

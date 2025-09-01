@@ -1,0 +1,3 @@
+@echo off
+echo Starting Library Management System with Node.js API Gateway...
+docker-compose --profile node up -d

@@ -1,0 +1,121 @@
+/* Users Management Styles */
+.users-table-container {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.users-table thead {
+  background: #f8f9fa;
+}
+
+.users-table th {
+  padding: 16px 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #495057;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.users-table td {
+  padding: 12px;
+  border-bottom: 1px solid #e9ecef;
+  vertical-align: middle;
+}
+
+.users-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.username-cell {
+  font-weight: 500;
+  color: #212529;
+}
+
+.role-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.role-badge.user {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.role-badge.admin {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-badge.active {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-badge.inactive {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.table-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.table-actions .action-btn {
+  padding: 6px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.table-actions .action-btn.edit {
+  background: #ffc107;
+  color: #212529;
+}
+
+.table-actions .action-btn.edit:hover {
+  background: #e0a800;
+}
+
+.table-actions .action-btn.deactivate {
+  background: #dc3545;
+  color: white;
+}
+
+.table-actions .action-btn.deactivate:hover {
+  background: #c82333;
+}
+
+.table-actions .action-btn.activate {
+  background: #28a745;
+  color: white;
+}
+
+.table-actions .action-btn.activate:hover {
+  background: #218838;
+}

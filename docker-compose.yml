@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_DB: library_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mypassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db-init/00_complete_init.sql:/docker-entrypoint-initdb.d/00_complete_init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  grpc-server:
+    build:
+      context: .
+      dockerfile: grpc-server/Dockerfile
+    ports:
+      - "50051:50051"
+    environment:
+      DB_HOST: postgres
+      DB_USER: postgres
+      DB_PASS: mypassword
+      DB_NAME: library_db
+      DB_PORT: 5432
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: python -u grpc-server/server.py
+
+  api-gateway-python:
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      GRPC_SERVER_HOST: grpc-server
+      GRPC_SERVER_PORT: 50051
+    depends_on:
+      - grpc-server
+    command: python api-gateway/gateway_async.py
+    profiles:
+      - python
+
+  api-gateway-node:
+    build:
+      context: .
+      dockerfile: api-gateway-node/Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      GRPC_SERVER_HOST: grpc-server
+      GRPC_SERVER_PORT: 50051
+    depends_on:
+      - grpc-server
+    profiles:
+      - node
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+
+volumes:
+  postgres_data:

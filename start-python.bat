@@ -1,0 +1,3 @@
+@echo off
+echo Starting Library Management System with Python API Gateway...
+docker-compose --profile python up -d

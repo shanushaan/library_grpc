@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  grpc-server-test:
+    build:
+      context: .
+      dockerfile: grpc-server/Dockerfile
+    command: python -m unittest discover -s grpc-server/tests -v
+    environment:
+      - DATABASE_URL=postgresql://postgres:mypassword@postgres:5432/library_db
+    depends_on:
+      - postgres
+    volumes:
+      - ./grpc-server/tests:/app/grpc-server/tests
+
+  api-gateway-test:
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
+    command: python -m unittest discover -s api-gateway/tests -v
+    environment:
+      - GRPC_SERVER_HOST=grpc-server
+      - GRPC_SERVER_PORT=50051
+    volumes:
+      - ./api-gateway/tests:/app/api-gateway/tests
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: library_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mypassword
+    ports:
+      - "5432:5432"
