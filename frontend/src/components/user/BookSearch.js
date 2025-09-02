@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import axios from 'axios';
 import { API_CONFIG } from '../../config/api';
+import { showNotification } from '../../store/slices/uiSlice';
+import DataTable from '../common/DataTable';
 
 const BookSearch = ({ user }) => {
+  const dispatch = useDispatch();
   const [searchQuery, setSearchQuery] = useState('');
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
 
   const searchBooks = async () => {
     setLoading(true);
@@ -14,7 +17,7 @@ const BookSearch = ({ user }) => {
       const response = await axios.get(API_CONFIG.getVersionedUrl(`/user/books/search?q=${searchQuery}`));
       setBooks(response.data);
     } catch (error) {
-      setMessage('Error searching books');
+      dispatch(showNotification({ message: 'Error searching books', type: 'error' }));
     } finally {
       setLoading(false);
     }
@@ -24,12 +27,14 @@ const BookSearch = ({ user }) => {
     try {
       const response = await axios.post(API_CONFIG.getVersionedUrl('/user/book-request'), {
         book_id: bookId,
-        request_type: 'ISSUE'
+        request_type: 'ISSUE',
+        user_id: user.user_id,
+        notes: 'Book request from search'
       });
-      setMessage(response.data.message);
-      searchBooks(); // Refresh the list
+      dispatch(showNotification({ message: response.data.message, type: 'success' }));
+      searchBooks();
     } catch (error) {
-      setMessage(error.response?.data?.detail || 'Error requesting book');
+      dispatch(showNotification({ message: error.response?.data?.detail || 'Error requesting book', type: 'error' }));
     }
   };
 
@@ -38,43 +43,65 @@ const BookSearch = ({ user }) => {
   }, []);
 
   return (
-    <div className="book-search">
-      <h2>Search Books</h2>
+    <div className="page-content">
+      <div className="page-header">
+        <h2>Search Books</h2>
+        <p>Search and request books from our collection</p>
+      </div>
       
-      <div className="search-bar">
-        <input
-          type="text"
-          placeholder="Search by title, author, or genre..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && searchBooks()}
+      <div className="search-section">
+        <div className="search-bar">
+          <input
+            type="text"
+            placeholder="Search by title, author, or genre..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && searchBooks()}
+            className="search-input"
+          />
+          <button onClick={searchBooks} disabled={loading} className="search-button">
+            {loading ? 'Searching...' : 'Search'}
+          </button>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="loading-state">
+          <div className="loading-spinner"></div>
+          <p>Searching books...</p>
+        </div>
+      ) : (
+        <DataTable
+          data={books}
+          columns={[
+            { key: 'title', header: 'Title' },
+            { key: 'author', header: 'Author', render: (value) => value || 'Unknown' },
+            { key: 'genre', header: 'Genre', render: (value) => value || 'Unknown' },
+            { key: 'published_year', header: 'Year', render: (value) => value || 'N/A' },
+            { 
+              key: 'available_copies', 
+              header: 'Available',
+              render: (value) => `${value} copies`
+            },
+            {
+              key: 'actions',
+              header: 'Action',
+              render: (_, book) => (
+                <button 
+                  onClick={() => requestBook(book.book_id)}
+                  disabled={!book.can_request}
+                  className={book.can_request ? 'btn btn-primary' : 'btn btn-disabled'}
+                >
+                  {book.can_request ? 'Request' : 'Not Available'}
+                </button>
+              )
+            }
+          ]}
+          keyField="book_id"
+          emptyMessage="No books found. Try a different search term."
+          className="books-search-table"
         />
-        <button onClick={searchBooks} disabled={loading}>
-          {loading ? 'Searching...' : 'Search'}
-        </button>
-      </div>
-
-      {message && <div className="message">{message}</div>}
-
-      <div className="books-grid">
-        {books.map(book => (
-          <div key={book.book_id} className="book-card">
-            <h3>{book.title}</h3>
-            <p><strong>Author:</strong> {book.author}</p>
-            <p><strong>Genre:</strong> {book.genre}</p>
-            <p><strong>Year:</strong> {book.published_year}</p>
-            <p><strong>Available:</strong> {book.available_copies} copies</p>
-            
-            <button 
-              onClick={() => requestBook(book.book_id)}
-              disabled={!book.can_request}
-              className={book.can_request ? 'btn-primary' : 'btn-disabled'}
-            >
-              {book.can_request ? 'Request Issue' : 'Not Available'}
-            </button>
-          </div>
-        ))}
-      </div>
+      )}
     </div>
   );
 };
