@@ -5,6 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 import { authService } from '../services/authService';
 import { loginSchema } from '../utils/validationSchemas';
 import { getErrorMessage } from '../utils/errorHandler';
+import { ENV_CONFIG } from '../config/environment';
 import PasswordInput from '../components/common/PasswordInput';
 
 const LoginPage = () => {
@@ -24,12 +25,13 @@ const LoginPage = () => {
   };
 
   const handleDemoLogin = (role, setFieldValue) => {
-    const demoCredentials = role === 'admin' 
-      ? { username: 'admin', password: 'admin123' }
-      : { username: 'john_user', password: 'user123' };
+    if (!ENV_CONFIG.DEMO_CREDENTIALS) return;
     
-    setFieldValue('username', demoCredentials.username);
-    setFieldValue('password', demoCredentials.password);
+    const demoCredentials = ENV_CONFIG.DEMO_CREDENTIALS[role];
+    if (demoCredentials) {
+      setFieldValue('username', demoCredentials.username);
+      setFieldValue('password', demoCredentials.password);
+    }
   };
 
   return (
@@ -93,23 +95,25 @@ const LoginPage = () => {
                 </button>
               </Form>
 
-              <div className="demo-section">
-                <p className="demo-text">Try demo accounts:</p>
-                <div className="demo-buttons">
-                  <button 
-                    onClick={() => handleDemoLogin('admin', setFieldValue)} 
-                    className="demo-button admin"
-                  >
-                    Admin Demo
-                  </button>
-                  <button 
-                    onClick={() => handleDemoLogin('user', setFieldValue)} 
-                    className="demo-button user"
-                  >
-                    User Demo
-                  </button>
+              {ENV_CONFIG.IS_DEVELOPMENT && (
+                <div className="demo-section">
+                  <p className="demo-text">Try demo accounts:</p>
+                  <div className="demo-buttons">
+                    <button 
+                      onClick={() => handleDemoLogin('admin', setFieldValue)} 
+                      className="demo-button admin"
+                    >
+                      Admin Demo
+                    </button>
+                    <button 
+                      onClick={() => handleDemoLogin('user', setFieldValue)} 
+                      className="demo-button user"
+                    >
+                      User Demo
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
             </>
           )}
         </Formik>

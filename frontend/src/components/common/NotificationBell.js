@@ -9,7 +9,8 @@ const NotificationBell = ({ user }) => {
   useEffect(() => {
     if (!user?.user_id) return;
     
-    const ws = new WebSocket(`ws://localhost:8001?userId=${user.user_id}`);
+    const wsUrl = process.env.REACT_APP_WS_URL || 'ws://localhost:8001';
+    const ws = new WebSocket(`${wsUrl}?userId=${user.user_id}`);
     
     ws.onmessage = (event) => {
       const notification = JSON.parse(event.data);
