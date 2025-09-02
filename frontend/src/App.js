@@ -4,10 +4,13 @@ import { Provider, useDispatch } from 'react-redux';
 import { store } from './store';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { fetchBookRequests } from './store/slices/bookRequestsSlice';
+import { lazy, Suspense } from 'react';
 import LoginPage from './pages/LoginPage';
-import AdminDashboard from './pages/AdminDashboard';
-import UserDashboard from './pages/UserDashboard';
 import LoadingScreen from './components/common/LoadingScreen';
+
+// Lazy load dashboard components
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const UserDashboard = lazy(() => import('./pages/UserDashboard'));
 import ProtectedRoute from './components/common/ProtectedRoute';
 import NotificationContainer from './components/common/NotificationContainer';
 import ErrorBoundary from './components/common/ErrorBoundary';
@@ -46,7 +49,9 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute requiredRole="ADMIN">
             <ErrorBoundary fallbackMessage="Admin dashboard encountered an error.">
-              <AdminDashboard />
+              <Suspense fallback={<LoadingScreen />}>
+                <AdminDashboard />
+              </Suspense>
             </ErrorBoundary>
           </ProtectedRoute>
         } 
@@ -56,7 +61,9 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute requiredRole="USER">
             <ErrorBoundary fallbackMessage="User dashboard encountered an error.">
-              <UserDashboard />
+              <Suspense fallback={<LoadingScreen />}>
+                <UserDashboard />
+              </Suspense>
             </ErrorBoundary>
           </ProtectedRoute>
         } 

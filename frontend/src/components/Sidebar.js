@@ -5,11 +5,21 @@ import { BookOpen, ChevronLeft, ChevronRight } from 'lucide-react';
 import clsx from 'clsx';
 import '../styles/Badge.css';
 
-const Sidebar = ({ menuItems, collapsed, onToggle, userRole }) => {
+const Sidebar = ({ menuItems, collapsed, onToggle, userRole, isMobile, mobileMenuOpen, onMobileClose }) => {
   const pendingCount = useSelector(state => state.bookRequests.pendingCount);
   
+  const handleNavClick = () => {
+    if (isMobile) {
+      onMobileClose();
+    }
+  };
+  
   return (
-    <div className={clsx('sidebar', { collapsed }, userRole)}>
+    <div className={clsx('sidebar', { 
+      collapsed: !isMobile && collapsed,
+      'mobile-open': isMobile && mobileMenuOpen,
+      'mobile-closed': isMobile && !mobileMenuOpen
+    }, userRole)}>
       <div className="sidebar-header">
         <div className="logo">
           <BookOpen className="logo-icon" size={collapsed ? 24 : 32} />
@@ -21,9 +31,11 @@ const Sidebar = ({ menuItems, collapsed, onToggle, userRole }) => {
           )}
         </div>
         
-        <button className="sidebar-toggle" onClick={onToggle}>
-          {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
-        </button>
+        {!isMobile && (
+          <button className="sidebar-toggle" onClick={onToggle}>
+            {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+          </button>
+        )}
       </div>
 
       <nav className="sidebar-nav">
@@ -36,6 +48,7 @@ const Sidebar = ({ menuItems, collapsed, onToggle, userRole }) => {
                   clsx('nav-link', { active: isActive })
                 }
                 end={item.path === '/admin' || item.path === '/dashboard'}
+                onClick={handleNavClick}
               >
                 <item.icon className="nav-icon" size={20} />
                 {!collapsed && (
