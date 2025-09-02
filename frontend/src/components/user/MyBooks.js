@@ -4,6 +4,7 @@ import { useDispatch } from 'react-redux';
 import { Calendar, User, BookOpen, Clock, AlertTriangle } from 'lucide-react';
 import { showNotification } from '../../store/slices/uiSlice';
 import { incrementPendingCount } from '../../store/slices/bookRequestsSlice';
+import DataTable from '../common/DataTable';
 import { API_CONFIG } from '../../config/api';
 
 const MyBooks = ({ user }) => {
@@ -71,115 +72,75 @@ const MyBooks = ({ user }) => {
 
       <div className="section">
         <h3>Currently Borrowed Books</h3>
-        {borrowedBooks.length === 0 ? (
-          <div className="empty-state">
-            <BookOpen size={48} />
-            <p>No books currently borrowed</p>
-          </div>
-        ) : (
-          <div className="table-container">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Book</th>
-                  <th>Author</th>
-                  <th>Borrowed Date</th>
-                  <th>Due Date</th>
-                  <th>Fine</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {borrowedBooks.map(book => (
-                  <tr key={book.transaction_id} className={isOverdue(book.due_date) ? 'overdue-row' : ''}>
-                    <td>
-                      <div className="book-info">
-                        <strong>{book.book_title}</strong>
-                        {isOverdue(book.due_date) && <AlertTriangle size={16} className="overdue-icon" />}
-                      </div>
-                    </td>
-                    <td>{book.book_author}</td>
-                    <td>
-                      <div className="date-info">
-                        <Calendar size={14} />
-                        {formatDate(book.transaction_date)}
-                      </div>
-                    </td>
-                    <td>
-                      <div className={`date-info ${isOverdue(book.due_date) ? 'overdue' : ''}`}>
-                        <Clock size={14} />
-                        {formatDate(book.due_date)}
-                      </div>
-                    </td>
-                    <td>
-                      <span className={`fine-amount ${book.fine_amount > 0 ? 'has-fine' : ''}`}>
-                        ${book.fine_amount || 0}
-                      </span>
-                    </td>
-                    <td>
-                      <button 
-                        onClick={() => requestReturn(book.transaction_id, book.book_title)}
-                        className="btn btn-secondary btn-sm"
-                      >
-                        Request Return
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <DataTable
+          data={borrowedBooks}
+          columns={[
+            { key: 'book_title', header: 'Book', render: (value, book) => (
+              <div className="book-info">
+                <strong>{value}</strong>
+                {isOverdue(book.due_date) && <AlertTriangle size={16} className="overdue-icon" />}
+              </div>
+            )},
+            { key: 'book_author', header: 'Author' },
+            { key: 'transaction_date', header: 'Borrowed Date', render: (value) => (
+              <div className="date-info">
+                <Calendar size={14} />
+                {formatDate(value)}
+              </div>
+            )},
+            { key: 'due_date', header: 'Due Date', render: (value) => (
+              <div className={`date-info ${isOverdue(value) ? 'overdue' : ''}`}>
+                <Clock size={14} />
+                {formatDate(value)}
+              </div>
+            )},
+            { key: 'fine_amount', header: 'Fine', render: (value) => (
+              <span className={`fine-amount ${value > 0 ? 'has-fine' : ''}`}>
+                ${value || 0}
+              </span>
+            )},
+            { key: 'actions', header: 'Actions', render: (_, book) => (
+              <button 
+                onClick={() => requestReturn(book.transaction_id, book.book_title)}
+                className="btn btn-secondary btn-sm"
+              >
+                Request Return
+              </button>
+            )}
+          ]}
+          keyField="transaction_id"
+          emptyMessage={<div className="empty-state"><BookOpen size={48} /><p>No books currently borrowed</p></div>}
+        />
       </div>
 
       <div className="section">
         <h3>My Book Requests</h3>
-        {requests.length === 0 ? (
-          <div className="empty-state">
-            <User size={48} />
-            <p>No requests made</p>
-          </div>
-        ) : (
-          <div className="table-container">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Book</th>
-                  <th>Author</th>
-                  <th>Request Type</th>
-                  <th>Date</th>
-                  <th>Status</th>
-                  <th>Notes</th>
-                </tr>
-              </thead>
-              <tbody>
-                {requests.map(request => (
-                  <tr key={request.request_id}>
-                    <td><strong>{request.book_title}</strong></td>
-                    <td>{request.book_author}</td>
-                    <td>
-                      <span className={`request-type ${request.request_type.toLowerCase()}`}>
-                        {request.request_type}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="date-info">
-                        <Calendar size={14} />
-                        {formatDate(request.request_date)}
-                      </div>
-                    </td>
-                    <td>
-                      <span className={`status-badge status-${request.status.toLowerCase()}`}>
-                        {request.status}
-                      </span>
-                    </td>
-                    <td>{request.notes || '-'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <DataTable
+          data={requests}
+          columns={[
+            { key: 'book_title', header: 'Book', render: (value) => <strong>{value}</strong> },
+            { key: 'book_author', header: 'Author' },
+            { key: 'request_type', header: 'Request Type', render: (value) => (
+              <span className={`request-type ${value.toLowerCase()}`}>
+                {value}
+              </span>
+            )},
+            { key: 'request_date', header: 'Date', render: (value) => (
+              <div className="date-info">
+                <Calendar size={14} />
+                {formatDate(value)}
+              </div>
+            )},
+            { key: 'status', header: 'Status', render: (value) => (
+              <span className={`status-badge status-${value.toLowerCase()}`}>
+                {value}
+              </span>
+            )},
+            { key: 'notes', header: 'Notes', render: (value) => value || '-' }
+          ]}
+          keyField="request_id"
+          emptyMessage={<div className="empty-state"><User size={48} /><p>No requests made</p></div>}
+        />
       </div>
     </div>
   );

@@ -2,7 +2,7 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import DashboardLayout from '../components/common/DashboardLayout';
 import { userRoutes } from '../config/routes';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 
 const UserDashboard = () => {
   const { user } = useAuth();

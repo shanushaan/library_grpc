@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Search, Calendar, User, Book, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar, User, Book, ChevronLeft, ChevronRight } from 'lucide-react';
 import { fetchTransactions } from '../../store/slices/transactionsSlice';
+import EnhancedDataTable from '../common/EnhancedDataTable';
 import '../../styles/TransactionsManagement.css';
 
 const TransactionsManagement = () => {
   const dispatch = useDispatch();
   const { data: transactions, loading, currentPage, totalPages, totalCount, limit } = useSelector(state => state.transactions);
-  const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
 
   const loadTransactions = (page = 1) => {
@@ -22,14 +22,7 @@ const TransactionsManagement = () => {
     loadTransactions(currentPage);
   }, [currentPage, dispatch]);
 
-  const filteredTransactions = useMemo(() => {
-    if (!Array.isArray(transactions)) return [];
-    return transactions.filter(txn => {
-      const matchesSearch = txn.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           txn.book_title.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesSearch;
-    });
-  }, [transactions, searchQuery]);
+
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -49,104 +42,53 @@ const TransactionsManagement = () => {
     <div className="page-content">
       <div className="page-header">
         <h2>Transactions Management</h2>
-        
-        <div className="filters-section">
-          <div className="search-box">
-            <Search size={20} />
-            <input
-              type="text"
-              placeholder="Search by user or book..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          
-          <select 
-            value={selectedStatus} 
-            onChange={(e) => setSelectedStatus(e.target.value)}
-            className="filter-select"
-          >
-            <option value="">All Status</option>
-            <option value="BORROWED">Borrowed</option>
-            <option value="RETURNED">Returned</option>
-            <option value="OVERDUE">Overdue</option>
-          </select>
-        </div>
       </div>
 
-      {loading ? (
-        <div className="loading-state">
-          <div className="loading-spinner"></div>
-          <p>Loading transactions...</p>
-        </div>
-      ) : (
-        <div className="transactions-table-container">
-          <table className="transactions-table">
-            <thead>
-              <tr>
-                <th>Transaction ID</th>
-                <th>User</th>
-                <th>Book</th>
-                <th>Type</th>
-                <th>Borrowed Date</th>
-                <th>Due Date</th>
-                <th>Return Date</th>
-                <th>Status</th>
-                <th>Fine</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredTransactions.map(txn => (
-                <tr key={txn.transaction_id}>
-                  <td className="transaction-id-cell">#{txn.transaction_id}</td>
-                  <td>
-                    <div className="user-info">
-                      <User size={14} />
-                      {txn.username}
-                    </div>
-                  </td>
-                  <td>
-                    <div className="book-info">
-                      <Book size={14} />
-                      {txn.book_title}
-                    </div>
-                  </td>
-                  <td>
-                    <span className="type-badge">
-                      {txn.transaction_type}
-                    </span>
-                  </td>
-                  <td>{formatDate(txn.transaction_date)}</td>
-                  <td>{formatDate(txn.due_date)}</td>
-                  <td>{formatDate(txn.return_date)}</td>
-                  <td>
-                    <span className={`status-badge ${getStatusColor(txn.status)}`}>
-                      {txn.status}
-                    </span>
-                  </td>
-                  <td>
-                    {txn.fine_amount > 0 ? (
-                      <span className="fine-amount">${txn.fine_amount}</span>
-                    ) : (
-                      <span className="no-fine">$0</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <EnhancedDataTable
+        data={Array.isArray(transactions) ? transactions : []}
+        columns={[
+          { key: 'transaction_id', header: 'Transaction ID', render: (value) => <span className="transaction-id-cell">#{value}</span> },
+          { key: 'username', header: 'User', render: (value) => (
+            <div className="user-info">
+              <User size={14} />
+              {value}
+            </div>
+          )},
+          { key: 'book_title', header: 'Book', render: (value) => (
+            <div className="book-info">
+              <Book size={14} />
+              {value}
+            </div>
+          )},
+          { key: 'transaction_type', header: 'Type', render: (value) => <span className="type-badge">{value}</span> },
+          { key: 'transaction_date', header: 'Borrowed Date', render: (value) => formatDate(value) },
+          { key: 'due_date', header: 'Due Date', render: (value) => formatDate(value) },
+          { key: 'return_date', header: 'Return Date', render: (value) => formatDate(value) },
+          { key: 'status', header: 'Status', render: (value) => (
+            <span className={`status-badge ${getStatusColor(value)}`}>
+              {value}
+            </span>
+          )},
+          { key: 'fine_amount', header: 'Fine', render: (value) => (
+            value > 0 ? (
+              <span className="fine-amount">${value}</span>
+            ) : (
+              <span className="no-fine">$0</span>
+            )
+          )}
+        ]}
+        keyField="transaction_id"
+        searchable={true}
+        searchPlaceholder="Search by user or book..."
+        filters={[
+          { value: 'BORROWED', label: 'Borrowed', filter: (txn) => txn.status === 'BORROWED' },
+          { value: 'RETURNED', label: 'Returned', filter: (txn) => txn.status === 'RETURNED' },
+          { value: 'OVERDUE', label: 'Overdue', filter: (txn) => txn.status === 'OVERDUE' }
+        ]}
+        emptyMessage={loading ? "Loading transactions..." : "No transactions found"}
+        className="transactions-table"
+      />
 
-      {!loading && filteredTransactions.length === 0 && (
-        <div className="no-results">
-          <Calendar size={48} />
-          <h3>No transactions found</h3>
-          <p>Try adjusting your search terms or filters</p>
-        </div>
-      )}
-
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="pagination">
           <button 

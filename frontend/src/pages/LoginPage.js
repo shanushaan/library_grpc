@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { BookOpen, User } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { authService } from '../services/authService';
 import PasswordInput from '../components/common/PasswordInput';
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Sidebar from '../Sidebar';
 import Header from '../Header';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 
 const DashboardLayout = ({ menuItems, title, children }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);

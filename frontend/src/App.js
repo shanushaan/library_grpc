@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Provider, useDispatch } from 'react-redux';
 import { store } from './store';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './hooks/useAuth';
 import { fetchBookRequests } from './store/slices/bookRequestsSlice';
 import LoginPage from './pages/LoginPage';
 import AdminDashboard from './pages/AdminDashboard';

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Filter, Edit, Trash2, Eye, Book, X, UserPlus, UserMinus } from 'lucide-react';
+import { Plus, Edit, Trash2, Book, X, UserPlus, UserMinus } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchBooks, createBook, updateBook, deleteBook } from '../../store/slices/booksSlice';
 import { showNotification } from '../../store/slices/uiSlice';
 import ConfirmModal from '../common/ConfirmModal';
+import EnhancedDataTable from '../common/EnhancedDataTable';
 import { API_CONFIG } from '../../config/api';
 import '../../styles/BookCatalog.css';
 import '../../styles/AdminBooks.css';
@@ -13,8 +14,6 @@ import '../../styles/Modal.css';
 const BooksManagement = () => {
   const dispatch = useDispatch();
   const { data: books, loading, genres, borrowCounts: bookBorrowCounts } = useSelector(state => state.books);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedGenre, setSelectedGenre] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [showIssueModal, setShowIssueModal] = useState(false);
   const [showReturnModal, setShowReturnModal] = useState(false);
@@ -67,15 +66,7 @@ const BooksManagement = () => {
     loadBooks();
   }, [dispatch]);
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    loadBooks(searchQuery);
-  };
 
-  // Filter books by genre
-  const filteredBooks = selectedGenre 
-    ? books.filter(book => book.genre === selectedGenre)
-    : books;
 
   const handleSaveBook = async (e) => {
     e.preventDefault();
@@ -261,131 +252,58 @@ const BooksManagement = () => {
         </div>
       </div>
 
-      {/* Search Section */}
-      <div className="search-section">
-        <form onSubmit={handleSearch} className="search-form">
-          <div className="search-input-group">
-            <Search className="search-icon" size={20} />
-            <input
-              type="text"
-              placeholder="Search by title, author, or genre..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="search-input"
-            />
-            <button type="submit" className="search-button">
-              Search
-            </button>
-          </div>
-        </form>
-
-        {/* Genre Filter */}
-        <div className="filter-section">
-          <Filter size={16} />
-          <select 
-            value={selectedGenre} 
-            onChange={(e) => setSelectedGenre(e.target.value)}
-            className="genre-filter"
-          >
-            <option value="">All Genres</option>
-            {genres.map(genre => (
-              <option key={genre} value={genre}>{genre}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Results Section */}
-      <div className="results-section">
-        <div className="results-header">
-          <h3>Book Collection ({filteredBooks.length} books)</h3>
-        </div>
-
-        {loading ? (
-          <div className="loading-state">
-            <div className="loading-spinner"></div>
-            <p>Loading books...</p>
-          </div>
-        ) : (
-          <div className="books-table-container">
-            <table className="books-table">
-              <thead>
-                <tr>
-                  <th>Title</th>
-                  <th>Author</th>
-                  <th>Genre</th>
-                  <th>Year</th>
-                  <th>Available</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredBooks.map(book => (
-                  <tr key={book.book_id}>
-                    <td className="book-title-cell">{book.title}</td>
-                    <td>{book.author || 'Unknown'}</td>
-                    <td>
-                      <span className="genre-tag">{book.genre || 'Unknown'}</span>
-                    </td>
-                    <td>{book.published_year || 'N/A'}</td>
-                    <td>
-                      <span className={`availability-badge ${
-                        book.available_copies > 0 ? 'available' : 'unavailable'
-                      }`}>
-                        {book.available_copies}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="table-actions">
-                        <button 
-                          className="action-btn issue" 
-                          title="Issue Book" 
-                          onClick={() => handleIssueBook(book)}
-                          disabled={book.available_copies <= 0}
-                        >
-                          <UserPlus size={14} />
-                        </button>
-                        <button 
-                          className="action-btn return" 
-                          title="Return Book" 
-                          onClick={() => handleReturnBook(book)}
-                          disabled={!bookBorrowCounts[book.book_id]}
-                        >
-                          <UserMinus size={14} />
-                        </button>
-                        <button className="action-btn edit" title="Edit" onClick={() => handleEditBook(book)}>
-                          <Edit size={14} />
-                        </button>
-                        <button className="action-btn delete" title="Delete" onClick={() => handleDeleteBook(book)}>
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {!loading && filteredBooks.length === 0 && (
-          <div className="no-results">
-            <Book size={48} />
-            <h3>No books found</h3>
-            <p>Try adjusting your search terms or browse all books</p>
-            <button 
-              onClick={() => {
-                setSearchQuery('');
-                setSelectedGenre('');
-                loadBooks();
-              }}
-              className="reset-button"
-            >
-              Show All Books
-            </button>
-          </div>
-        )}
-      </div>
+      <EnhancedDataTable
+        data={books}
+        columns={[
+          { key: 'title', header: 'Title', render: (value) => <span className="book-title-cell">{value}</span> },
+          { key: 'author', header: 'Author', render: (value) => value || 'Unknown' },
+          { key: 'genre', header: 'Genre', render: (value) => <span className="genre-tag">{value || 'Unknown'}</span> },
+          { key: 'published_year', header: 'Year', render: (value) => value || 'N/A' },
+          { key: 'available_copies', header: 'Available', render: (value) => (
+            <span className={`availability-badge ${value > 0 ? 'available' : 'unavailable'}`}>
+              {value}
+            </span>
+          )},
+          { key: 'actions', header: 'Actions', render: (_, book) => (
+            <div className="table-actions">
+              <button 
+                className="action-btn issue" 
+                title="Issue Book" 
+                onClick={() => handleIssueBook(book)}
+                disabled={book.available_copies <= 0}
+              >
+                <UserPlus size={14} />
+              </button>
+              <button 
+                className="action-btn return" 
+                title="Return Book" 
+                onClick={() => handleReturnBook(book)}
+                disabled={!bookBorrowCounts[book.book_id]}
+              >
+                <UserMinus size={14} />
+              </button>
+              <button className="action-btn edit" title="Edit" onClick={() => handleEditBook(book)}>
+                <Edit size={14} />
+              </button>
+              <button className="action-btn delete" title="Delete" onClick={() => handleDeleteBook(book)}>
+                <Trash2 size={14} />
+              </button>
+            </div>
+          )}
+        ]}
+        keyField="book_id"
+        searchable={true}
+        searchPlaceholder="Search by title, author, or genre..."
+        filters={[
+          ...genres.map(genre => ({
+            value: genre,
+            label: genre,
+            filter: (book) => book.genre === genre
+          }))
+        ]}
+        emptyMessage={loading ? "Loading books..." : "No books found"}
+        className="books-table"
+      />
 
       {/* Book Modal */}
       {showModal && (
