@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Search, Calendar, User, Book, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { API_CONFIG } from '../../config/api';
 import '../../styles/TransactionsManagement.css';
 
 const TransactionsManagement = () => {
@@ -15,7 +16,7 @@ const TransactionsManagement = () => {
   const fetchTransactions = async (page = 1) => {
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:8001/api/v1/admin/transactions?status=${selectedStatus}&page=${page}&limit=${limit}`);
+      const response = await fetch(API_CONFIG.getVersionedUrl(`/admin/transactions?status=${selectedStatus}&page=${page}&limit=${limit}`));
       const data = await response.json();
       
       // Ensure transactions is always an array

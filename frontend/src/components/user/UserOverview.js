@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BookOpen, Clock, AlertTriangle, DollarSign } from 'lucide-react';
 import axios from 'axios';
+import { API_CONFIG } from '../../config/api';
 
 const UserOverview = ({ user }) => {
   const [stats, setStats] = useState({
@@ -14,7 +15,7 @@ const UserOverview = ({ user }) => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await axios.get(`http://localhost:8001/user/${user.user_id}/stats`);
+        const response = await axios.get(API_CONFIG.getVersionedUrl(`/user/${user.user_id}/stats`));
         setStats(response.data);
       } catch (error) {
         console.error('Error fetching user stats:', error);

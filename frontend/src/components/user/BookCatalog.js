@@ -3,6 +3,7 @@ import { useDispatch } from 'react-redux';
 import { Search, Book, Filter } from 'lucide-react';
 import { showNotification } from '../../store/slices/uiSlice';
 import { incrementPendingCount } from '../../store/slices/bookRequestsSlice';
+import { API_CONFIG } from '../../config/api';
 import '../../styles/BookCatalog.css';
 import '../../styles/BooksTable.css';
 
@@ -18,7 +19,7 @@ const BookCatalog = ({ user }) => {
   const fetchBooks = async (query = '') => {
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:8001/api/v1/user/books/search?q=${encodeURIComponent(query)}`);
+      const response = await fetch(API_CONFIG.getVersionedUrl(`/user/books/search?q=${encodeURIComponent(query)}`));
       const data = await response.json();
       setBooks(data);
       
@@ -51,7 +52,7 @@ const BookCatalog = ({ user }) => {
   // Request book function
   const requestBook = async (bookId) => {
     try {
-      const response = await fetch('http://localhost:8001/api/v1/user/book-request', {
+      const response = await fetch(API_CONFIG.getVersionedUrl('/user/book-request'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

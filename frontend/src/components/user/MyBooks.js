@@ -4,6 +4,7 @@ import { useDispatch } from 'react-redux';
 import { Calendar, User, BookOpen, Clock, AlertTriangle } from 'lucide-react';
 import { showNotification } from '../../store/slices/uiSlice';
 import { incrementPendingCount } from '../../store/slices/bookRequestsSlice';
+import { API_CONFIG } from '../../config/api';
 
 const MyBooks = ({ user }) => {
   const dispatch = useDispatch();
@@ -15,8 +16,8 @@ const MyBooks = ({ user }) => {
     setLoading(true);
     try {
       const [requestsResponse, transactionsResponse] = await Promise.all([
-        axios.get(`http://localhost:8001/api/v1/user/${user.user_id}/book-requests`),
-        axios.get(`http://localhost:8001/api/v1/user/${user.user_id}/transactions?status=BORROWED`)
+        axios.get(API_CONFIG.getVersionedUrl(`/user/${user.user_id}/book-requests`)),
+        axios.get(API_CONFIG.getVersionedUrl(`/user/${user.user_id}/transactions?status=BORROWED`))
       ]);
       
       setBorrowedBooks(transactionsResponse.data);
@@ -30,7 +31,7 @@ const MyBooks = ({ user }) => {
 
   const requestReturn = async (transactionId, bookTitle) => {
     try {
-      const response = await axios.post('http://localhost:8001/api/v1/user/book-request', {
+      const response = await axios.post(API_CONFIG.getVersionedUrl('/user/book-request'), {
         book_id: 0, // Will be ignored for return requests
         request_type: 'RETURN',
         user_id: user.user_id,

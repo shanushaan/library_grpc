@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_CONFIG } from '../../config/api';
 
 const BookSearch = ({ user }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -10,7 +11,7 @@ const BookSearch = ({ user }) => {
   const searchBooks = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`http://localhost:8001/user/books/search?q=${searchQuery}`);
+      const response = await axios.get(API_CONFIG.getVersionedUrl(`/user/books/search?q=${searchQuery}`));
       setBooks(response.data);
     } catch (error) {
       setMessage('Error searching books');
@@ -21,7 +22,7 @@ const BookSearch = ({ user }) => {
 
   const requestBook = async (bookId) => {
     try {
-      const response = await axios.post('http://localhost:8001/user/book-request', {
+      const response = await axios.post(API_CONFIG.getVersionedUrl('/user/book-request'), {
         book_id: bookId,
         request_type: 'ISSUE'
       });

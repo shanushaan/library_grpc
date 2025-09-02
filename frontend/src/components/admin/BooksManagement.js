@@ -3,6 +3,7 @@ import { Plus, Search, Filter, Edit, Trash2, Eye, Book, X, UserPlus, UserMinus }
 import { useDispatch } from 'react-redux';
 import { showNotification } from '../../store/slices/uiSlice';
 import ConfirmModal from '../common/ConfirmModal';
+import { API_CONFIG } from '../../config/api';
 import '../../styles/BookCatalog.css';
 import '../../styles/AdminBooks.css';
 import '../../styles/BooksTable.css';
@@ -41,8 +42,8 @@ const BooksManagement = () => {
     setLoading(true);
     try {
       const [booksResponse, transactionsResponse] = await Promise.all([
-        fetch(`http://localhost:8001/api/v1/admin/books?q=${encodeURIComponent(query)}`),
-        fetch('http://localhost:8001/api/v1/admin/transactions?status=BORROWED')
+        fetch(API_CONFIG.getVersionedUrl(`/admin/books?q=${encodeURIComponent(query)}`)),
+        fetch(API_CONFIG.getVersionedUrl('/admin/transactions?status=BORROWED'))
       ]);
       
       const booksData = await booksResponse.json();
@@ -70,7 +71,7 @@ const BooksManagement = () => {
   // Fetch users for issue modal
   const fetchUsers = async () => {
     try {
-      const response = await fetch('http://localhost:8001/api/v1/admin/users');
+      const response = await fetch(API_CONFIG.getVersionedUrl('/admin/users'));
       const data = await response.json();
       setUsers(data.filter(user => user.is_active && user.role === 'USER'));
     } catch (error) {
@@ -81,7 +82,7 @@ const BooksManagement = () => {
   // Fetch borrowed transactions for return modal
   const fetchBorrowedTransactions = async (bookId) => {
     try {
-      const response = await fetch('http://localhost:8001/api/v1/admin/transactions?status=BORROWED');
+      const response = await fetch(API_CONFIG.getVersionedUrl('/admin/transactions?status=BORROWED'));
       const data = await response.json();
       const bookTransactions = data.transactions.filter(txn => txn.book_id === bookId);
       setBorrowedTransactions(bookTransactions);
@@ -112,8 +113,8 @@ const BooksManagement = () => {
     setLoading(true);
     try {
       const url = editingBook 
-        ? `http://localhost:8001/api/v1/admin/books/${editingBook.book_id}`
-        : 'http://localhost:8001/api/v1/admin/books';
+        ? API_CONFIG.getVersionedUrl(`/admin/books/${editingBook.book_id}`)
+        : API_CONFIG.getVersionedUrl('/admin/books');
       const method = editingBook ? 'PUT' : 'POST';
       
       const response = await fetch(url, {
@@ -152,7 +153,7 @@ const BooksManagement = () => {
 
   const confirmDeleteBook = async () => {
     try {
-      const response = await fetch(`http://localhost:8001/api/v1/admin/books/${confirmModal.bookId}`, {
+      const response = await fetch(API_CONFIG.getVersionedUrl(`/admin/books/${confirmModal.bookId}`), {
         method: 'DELETE'
       });
       
@@ -228,7 +229,7 @@ const BooksManagement = () => {
     
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:8001/api/v1/admin/issue-book', {
+      const response = await fetch(API_CONFIG.getVersionedUrl('/admin/issue-book'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -278,7 +279,7 @@ const BooksManagement = () => {
     
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:8001/api/v1/admin/return-book', {
+      const response = await fetch(API_CONFIG.getVersionedUrl('/admin/return-book'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
