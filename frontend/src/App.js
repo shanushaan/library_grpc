@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { Provider } from 'react-redux';
+import { Provider, useDispatch } from 'react-redux';
 import { store } from './store';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { fetchBookRequests } from './store/slices/bookRequestsSlice';
 import LoginPage from './pages/LoginPage';
 import AdminDashboard from './pages/AdminDashboard';
 import UserDashboard from './pages/UserDashboard';
@@ -14,6 +15,13 @@ import './styles/UserDashboard.css';
 
 const AppRoutes = () => {
   const { user, loading } = useAuth();
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (user?.role === 'ADMIN') {
+      dispatch(fetchBookRequests());
+    }
+  }, [user, dispatch]);
 
   if (loading) {
     return <LoadingScreen />;

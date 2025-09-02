@@ -31,8 +31,13 @@ const bookRequestsSlice = createSlice({
     data: [],
     loading: false,
     error: null,
+    pendingCount: 0,
   },
-  reducers: {},
+  reducers: {
+    incrementPendingCount: (state) => {
+      state.pendingCount += 1;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchBookRequests.pending, (state) => {
@@ -42,6 +47,7 @@ const bookRequestsSlice = createSlice({
       .addCase(fetchBookRequests.fulfilled, (state, action) => {
         state.loading = false;
         state.data = action.payload;
+        state.pendingCount = action.payload.filter(req => req.status === 'PENDING').length;
       })
       .addCase(fetchBookRequests.rejected, (state, action) => {
         state.loading = false;
@@ -49,11 +55,14 @@ const bookRequestsSlice = createSlice({
       })
       .addCase(approveBookRequest.fulfilled, (state, action) => {
         state.data = state.data.filter(req => req.request_id !== action.payload.requestId);
+        state.pendingCount = Math.max(0, state.pendingCount - 1);
       })
       .addCase(rejectBookRequest.fulfilled, (state, action) => {
         state.data = state.data.filter(req => req.request_id !== action.payload.requestId);
+        state.pendingCount = Math.max(0, state.pendingCount - 1);
       });
   },
 });
 
+export const { incrementPendingCount } = bookRequestsSlice.actions;
 export default bookRequestsSlice.reducer;

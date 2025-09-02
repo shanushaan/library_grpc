@@ -44,7 +44,8 @@ export const adminRoutes = [
     label: 'Book Requests', 
     icon: FileText, 
     path: '/admin/requests',
-    component: BookRequests 
+    component: BookRequests,
+    badge: true
   },
   { 
     id: 'users', 

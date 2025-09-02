@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useDispatch } from 'react-redux';
 import { Calendar, User, BookOpen, Clock, AlertTriangle } from 'lucide-react';
 import { showNotification } from '../../store/slices/uiSlice';
+import { incrementPendingCount } from '../../store/slices/bookRequestsSlice';
 
 const MyBooks = ({ user }) => {
   const dispatch = useDispatch();
@@ -38,6 +39,7 @@ const MyBooks = ({ user }) => {
       });
       
       dispatch(showNotification({ message: response.data.message, type: 'success' }));
+      dispatch(incrementPendingCount());
       fetchMyBooks(); // Refresh the list
     } catch (error) {
       dispatch(showNotification({ message: error.response?.data?.detail || 'Error requesting return', type: 'error' }));

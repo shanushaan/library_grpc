@@ -1,9 +1,13 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import { BookOpen, ChevronLeft, ChevronRight } from 'lucide-react';
 import clsx from 'clsx';
+import '../styles/Badge.css';
 
 const Sidebar = ({ menuItems, collapsed, onToggle, userRole }) => {
+  const pendingCount = useSelector(state => state.bookRequests.pendingCount);
+  
   return (
     <div className={clsx('sidebar', { collapsed }, userRole)}>
       <div className="sidebar-header">
@@ -34,10 +38,22 @@ const Sidebar = ({ menuItems, collapsed, onToggle, userRole }) => {
                 end={item.path === '/admin' || item.path === '/dashboard'}
               >
                 <item.icon className="nav-icon" size={20} />
-                {!collapsed && <span className="nav-label">{item.label}</span>}
+                {!collapsed && (
+                  <span className="nav-label">
+                    {item.label}
+                    {item.badge && item.id === 'requests' && pendingCount > 0 && (
+                      <span className="nav-badge">{pendingCount}</span>
+                    )}
+                  </span>
+                )}
                 {collapsed && (
                   <div className="tooltip">
-                    <span>{item.label}</span>
+                    <span>
+                      {item.label}
+                      {item.badge && item.id === 'requests' && pendingCount > 0 && (
+                        <span className="nav-badge">{pendingCount}</span>
+                      )}
+                    </span>
                   </div>
                 )}
               </NavLink>

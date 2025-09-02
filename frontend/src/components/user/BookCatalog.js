@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { Search, Book, Filter } from 'lucide-react';
 import { showNotification } from '../../store/slices/uiSlice';
+import { incrementPendingCount } from '../../store/slices/bookRequestsSlice';
 import '../../styles/BookCatalog.css';
 import '../../styles/BooksTable.css';
 
@@ -68,6 +69,7 @@ const BookCatalog = ({ user }) => {
           message: 'Book request submitted successfully!', 
           type: 'success' 
         }));
+        dispatch(incrementPendingCount());
       } else {
         dispatch(showNotification({ 
           message: 'Failed to submit book request', 
