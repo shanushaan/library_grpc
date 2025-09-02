@@ -47,7 +47,7 @@ docker-compose ps
 
 ### Step 5: Login
 - **Admin**: `admin` / `admin123`
-- **User**: `john_user` / `user123`
+- **User**: `logan_baker` / `user123` or `john_user` / `user123`
 
 ## 🔧 Detailed Setup Instructions
 
@@ -288,7 +288,8 @@ docker system df
 
 ### Pre-loaded Users (30 total)
 - **Admins**: admin, librarian, manager
-- **Users**: john_user, jane_smith, mike_brown, + 24 more
+- **Users**: logan_baker, john_user, jane_smith, mike_brown, + 23 more
+- **WebSocket**: Real-time notifications for user ID 32 (logan_baker)
 
 ### Pre-loaded Books (104 unique)
 - **Genres**: Fiction, Science Fiction, Fantasy, Mystery, Romance, Young Adult, Non-Fiction, Biography, History, Self-Help, Classic Literature
