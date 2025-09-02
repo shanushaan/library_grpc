@@ -246,6 +246,8 @@ export const bookSchema = Yup.object({
 - ✅ Transaction business rule validation
 - ✅ Modular API Gateway architecture
 - ✅ Color-coded notification system
+- ✅ Route-level lazy loading (React.lazy + Suspense)
+- ✅ Responsive burger menu for mobile devices
 
 ## 🤝 Contributing
 
