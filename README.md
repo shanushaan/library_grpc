@@ -1,357 +1,260 @@
 # Library Management System
 
-A comprehensive microservices-based library management system built with  gRPC backend, async FastAPI OR NODE gateway, React frontend, and PostgreSQL database with advanced features like pagination, structured logging, and performance optimization.
+A modern, full-stack library management system built with React, Node.js, gRPC, and PostgreSQL featuring real-time notifications, comprehensive validation, and robust error handling.
 
-## 🚀 Key Features
+## 🏗️ Project Structure
 
-### 📚 Book Management
-- **Complete Book Catalog**: 104 unique books across 11 genres (Fiction, Science Fiction, Fantasy, Mystery, etc.)
-- **Advanced Search & Filtering**: Search by title, author, or genre with real-time results
-- **Inventory Management**: Automatic available copies tracking
-- **Tabular Display**: Professional data tables with sorting and filtering
-
-### 👥 User Management & Authentication
-- **Role-Based Access Control**: Admin and User roles with different permissions
-- **Secure Authentication**: SHA-256 password hashing with session management
-- **User Profiles**: Complete user information with activity tracking
-- **30 Pre-loaded Users**: 3 admins + 27 regular users for testing
-
-### 📋 Request & Transaction System
-- **Book Request Workflow**: Users request books → Admin approval → Automatic inventory update
-- **Issue/Return Management**: Complete transaction lifecycle tracking
-- **Due Date Management**: 30-day borrowing period with automatic due date calculation
-- **Fine System**: ₹10/day fine for overdue books with automatic calculation
-- **3-Book Limit**: Users can borrow maximum 3 books simultaneously
-
-### 📊 Dashboard & Analytics
-- **User Dashboard**: Personal statistics (books taken, currently borrowed, overdue, fines)
-- **Admin Dashboard**: System-wide statistics and management tools
-- **Real-time Data**: Live updates of book availability and user statistics
-- **Transaction History**: Complete audit trail with pagination
-
-### 🔧 Advanced Technical Features
-- **Async Performance**: FastAPI with async/await and concurrent processing
-- **Structured JSON Logging**: Comprehensive logging for monitoring and debugging
-- **Pagination**: Efficient data loading with 20 items per page (admin transactions)
-- **Microservices Architecture**: Scalable gRPC backend with REST API gateway
-- **Docker Orchestration**: Complete containerized deployment
-- **Database Optimization**: Clean data structure with proper relationships and indexes
-
-## Architecture
-
-- **Backend**: gRPC service (Python)
-- **API Gateway**: FastAPI (Python) or Node ( JS)
-- **Frontend**: React.js
-- **Database**: PostgreSQL
-- **Orchestration**: Docker Compose
-
-## 🚀 Quick Start
-
-### Prerequisites
-- **Docker Desktop**: Latest version with Docker Compose
-- **Git**: For cloning the repository
-- **Ports Available**: 3000, 8001, 50051, 5432
-
-### Installation
-
-1. **Clone the repository:**
-```bash
-git clone https://github.com/shanushaan/library_grpc.git
-cd library_grpc
-```
-
-2. **Choose API Gateway (Node.js recommended):**
-```bash
-# Option A: Node.js Gateway (Recommended)
-docker-compose --profile node up -d
-
-# Option B: Python FastAPI Gateway
-docker-compose --profile python up -d
-```
-
-3. **Wait for services to start** (30-60 seconds)
-   - Monitor with: `docker-compose ps`
-   - All services should show "Up" status
-
-4. **Access the application:**
-   - **Frontend**: http://localhost:3000
-   - **API Gateway**: http://localhost:8001
-   - **API Documentation**: http://localhost:8001/docs (Python only)
-
-### 🔑 Default Login Credentials
-
-**Administrator Accounts:**
-- Username: `admin` / Password: `admin123`
-- Username: `librarian` / Password: `lib123`
-- Username: `manager` / Password: `mgr123`
-
-**Regular User Accounts:**
-- Username: `john_user` / Password: `user123`
-- Username: `jane_smith` / Password: `jane123`
-- Username: `mike_brown` / Password: `mike123`
-- *...and 24 more users for comprehensive testing*
-
-**Quick Test Scenarios:**
-1. **Admin Login**: Use `admin/admin123` to access full system management
-2. **User Login**: Use `john_user/user123` to test user features
-3. **Book Search**: Search for "Harry Potter" or "Science Fiction"
-4. **Request Flow**: Request a book as user → Approve as admin
-5. **Dashboard**: View statistics and transaction history
-
-## Services
-
-| Service | Port | Description |
-|---------|------|-------------|
-| Frontend | 3000 | React application |
-| API Gateway | 8001 | FastAPI REST API |
-| gRPC Server | 50051 | Core business logic |
-| PostgreSQL | 5432 | Database |
-
-## 📊 Database & Sample Data
-
-The system comes with comprehensive pre-populated data for immediate testing:
-
-### Books (104 unique titles)
-- **Fiction**: Classic literature (Great Gatsby, Pride and Prejudice, etc.)
-- **Science Fiction**: Modern sci-fi (Dune, 1984, Foundation, etc.)
-- **Fantasy**: Popular fantasy (Harry Potter series, Lord of the Rings, etc.)
-- **Mystery/Thriller**: Crime novels (Gone Girl, Da Vinci Code, etc.)
-- **Romance**: Love stories (The Notebook, Fault in Our Stars, etc.)
-- **Young Adult**: Teen fiction (Hunger Games, Divergent, etc.)
-- **Non-Fiction**: Educational content (Sapiens, Educated, etc.)
-- **Biography**: Life stories (Becoming, John Adams, etc.)
-- **History**: Historical accounts (Band of Brothers, Diary of Anne Frank, etc.)
-- **Self-Help**: Personal development (Atomic Habits, 7 Habits, etc.)
-- **Classic Literature**: Timeless works (War and Peace, Don Quixote, etc.)
-
-### Users (30 total)
-- **3 Administrators**: Full system access
-- **27 Regular Users**: Standard borrowing privileges
-- **Realistic Data**: Proper names, emails, and activity history
-
-### Transactions (100 records)
-- **23 Active Borrowings**: 15 current + 8 overdue books
-- **77 Returned Books**: Complete transaction history
-- **Overdue Fines**: ₹10-₹320 accumulated fines
-- **Realistic Timeline**: 6+ months of library activity (July 2023 - February 2024)
-- **Transaction Types**: Borrow/Return with proper due dates and fine calculations
-
-## Development
-
-### Project Structure
 ```
 library-grpc-service/
-├── grpc-server/          # gRPC backend service
-├── api-gateway/          # FastAPI REST gateway
-├── frontend/             # React application
-├── shared/               # Common models & database config
-├── proto/                # Protocol buffer definitions
-├── db-init/              # Database initialization scripts
-└── docker-compose.yml    # Service orchestration
+├── frontend/                     # React Frontend Application
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── admin/           # Admin-specific components
+│   │   │   │   ├── BookRequests.js
+│   │   │   │   ├── BooksManagement.js
+│   │   │   │   ├── DashboardOverview.js
+│   │   │   │   ├── TransactionsManagement.js
+│   │   │   │   └── UsersManagement.js
+│   │   │   ├── user/            # User-specific components
+│   │   │   │   ├── BookSearch.js
+│   │   │   │   ├── MyBooks.js
+│   │   │   │   └── UserProfile.js
+│   │   │   └── common/          # Shared components
+│   │   │       ├── ErrorBoundary.js
+│   │   │       ├── NotificationBell.js
+│   │   │       ├── DataTable.js
+│   │   │       └── DashboardLayout.js
+│   │   ├── pages/               # Route components
+│   │   ├── store/               # Redux state management
+│   │   ├── utils/               # Validation & error handling
+│   │   └── styles/              # CSS styling
+│   └── package.json
+├── api-gateway-node/            # Node.js API Gateway
+│   ├── routes/                  # Modular route handlers
+│   │   ├── auth.js
+│   │   ├── books.js
+│   │   ├── requests.js
+│   │   ├── transactions.js
+│   │   └── users.js
+│   ├── utils/                   # gRPC client utilities
+│   ├── websocket.js             # WebSocket server
+│   └── server.js                # Main server file
+├── grpc-server/                 # Python gRPC Backend
+│   ├── services/                # Business logic services
+│   ├── models/                  # Database models
+│   └── server.py                # gRPC server
+├── shared/                      # Shared database utilities
+└── docker-compose.yml           # Container orchestration
 ```
 
-### 🔧 Development Commands
+## 🔄 Data Flow Architecture
 
-**Stop Services:**
-```bash
-docker-compose down
+```
+┌─────────────────┐    HTTP/WS     ┌──────────────────┐    gRPC      ┌─────────────────┐
+│   React Client  │ ◄──────────► │  Node.js Gateway │ ◄─────────► │  Python gRPC    │
+│                 │               │                  │             │     Server      │
+│ • Redux Store   │               │ • Route Handlers │             │ • Business Logic│
+│ • Components    │               │ • WebSocket      │             │ • Data Models   │
+│ • Validation    │               │ • Error Handling │             │ • Database ORM  │
+└─────────────────┘               └──────────────────┘             └─────────────────┘
+                                                                            │
+                                                                            ▼
+                                                                   ┌─────────────────┐
+                                                                   │   PostgreSQL    │
+                                                                   │    Database     │
+                                                                   └─────────────────┘
 ```
 
-**View Logs:**
-```bash
-# All services
-docker-compose logs
+## ✨ Key Features
 
-# Specific service
-docker-compose logs frontend
-docker-compose logs api-gateway-node
-docker-compose logs grpc-server
-```
+### 🔐 Authentication & Authorization
+- JWT-based authentication with role-based access control
+- Separate dashboards for Users and Admins
+- Protected routes with automatic redirects
 
-**Rebuild Services:**
-```bash
-# Rebuild all
-docker-compose build
+### 📚 Book Management
+- Complete CRUD operations for book inventory
+- Advanced search and filtering capabilities
+- Real-time availability tracking
 
-# Rebuild and restart
-docker-compose up --build -d
-```
+### 👥 User Management
+- User registration and profile management
+- Admin controls for user activation/deactivation
+- Role-based permissions (USER/ADMIN)
 
-**Reset Database:**
-```bash
-# Remove volumes and restart
-docker-compose down -v
-docker-compose --profile node up -d
-```
+### 📋 Transaction System
+- Book issue/return workflow with due dates
+- Automatic fine calculations for overdue books
+- Transaction history and reporting
 
-**Switch API Gateway:**
-```bash
-# Switch to Python gateway
-docker-compose down
-docker-compose --profile python up -d
+### 🔔 Real-Time Notifications
+- WebSocket-powered push notifications
+- Instant alerts for request approvals/rejections
+- Color-coded notification system
 
-# Switch to Node.js gateway
-docker-compose down
-docker-compose --profile node up -d
-```
+### ✅ Enhanced Validation
+- **Formik + Yup** integration for robust form validation
+- **Transaction Business Rules:**
+  - Duplicate request prevention
+  - User borrowing limits (max 5 books)
+  - Book availability validation
+  - Return eligibility checks
 
-## 🔌 API Endpoints
+### 🛡️ Error Handling & Recovery
+- **Multi-Level Error Boundaries:**
+  - App-level global protection
+  - Route-level component isolation
+  - Critical component crash prevention
+- **Contextual Error Messages:**
+  - Network errors (orange)
+  - Authentication errors (red)
+  - Server errors (brown)
+  - Validation errors (yellow)
 
-### Authentication
-- `POST /login` - User authentication with role-based access
+## 🚀 Getting Started
 
-### Book Management
-- `GET /user/books/search?q={query}` - Search books by title, author, or genre
-- `GET /admin/books?q={query}` - Admin book catalog management
+### Prerequisites
+- Docker & Docker Compose
+- Node.js 18+
+- Python 3.10+
 
-### User Operations
-- `GET /user/{user_id}/stats` - Dashboard statistics (borrowed, overdue, fines)
-- `GET /user/{user_id}/transactions?status={status}` - Transaction history
-- `GET /user/{user_id}/book-requests` - User's book requests
-- `POST /user/book-request` - Create new book request (issue/return)
+### Installation & Setup
 
-### Admin Operations
-- `GET /admin/users` - User management interface
-- `GET /admin/transactions?page={page}&limit={limit}&status={status}` - **Paginated** transaction history
-- `GET /admin/book-requests` - Pending book requests management
-- `POST /admin/book-requests/{id}/approve` - Approve book requests
-- `POST /admin/book-requests/{id}/reject` - Reject book requests with notes
-- `POST /admin/issue-book` - Direct book issuance
-- `POST /admin/return-book` - Direct book return
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd library-grpc-service
+   ```
 
-### System Features
-- **Pagination**: Efficient data loading (20 items per page)
-- **Filtering**: Status-based filtering for transactions and requests
-- **Search**: Real-time search across multiple fields
-- **Concurrent Processing**: Async API calls for better performance
+2. **Start all services**
+   ```bash
+   docker-compose up --build
+   ```
 
-## 🛠️ Technology Stack
+3. **Access the application**
+   - Frontend: http://localhost:3000
+   - API Gateway: http://localhost:8001
+   - Database: localhost:5432
 
-### Backend Services
-- **gRPC Server**: Python 3.10, gRPC, SQLAlchemy ORM
-- **API Gateway**: FastAPI (async), Pydantic validation, CORS middleware
-- **Database**: PostgreSQL 13 with comprehensive sample data
-- **Authentication**: SHA-256 hashing, role-based access control
+### Demo Accounts
+- **Admin:** admin / admin123
+- **User:** logan_baker / user123
+
+## 🔧 Technology Stack
 
 ### Frontend
-- **Framework**: React 18 with modern hooks
-- **HTTP Client**: Axios for API communication
-- **Icons**: Lucide React icon library
-- **Styling**: Custom CSS with responsive design
-- **Components**: Modular component architecture
+- **React 18** - Modern UI library
+- **Redux Toolkit** - State management
+- **Formik + Yup** - Form validation
+- **Lucide React** - Icon library
+- **WebSocket** - Real-time communication
 
-### DevOps & Infrastructure
-- **Containerization**: Docker with multi-stage builds
-- **Orchestration**: Docker Compose with health checks
-- **Logging**: Structured JSON logging across all services
-- **Development**: Hot reload for both frontend and backend
+### Backend
+- **Node.js** - API Gateway server
+- **Python** - gRPC business logic server
+- **gRPC** - High-performance RPC framework
+- **PostgreSQL** - Relational database
 
-### Performance Features
-- **Async Processing**: FastAPI with asyncio for concurrent operations
-- **Connection Pooling**: Efficient database connections
-- **Pagination**: Memory-efficient data loading
-- **Caching**: Optimized data retrieval patterns
+### DevOps
+- **Docker** - Containerization
+- **Docker Compose** - Multi-container orchestration
 
-## 🏗️ System Architecture
+## 📊 API Endpoints
 
+### Authentication
+- `POST /api/v1/login` - User authentication
+- `POST /api/v1/logout` - User logout
+
+### Books
+- `GET /api/v1/books` - List all books
+- `POST /api/v1/books` - Create new book
+- `PUT /api/v1/books/:id` - Update book
+- `DELETE /api/v1/books/:id` - Delete book
+
+### Transactions
+- `GET /api/v1/transactions` - List transactions
+- `POST /api/v1/user/book-request` - Create book request
+- `PUT /api/v1/admin/requests/:id/approve` - Approve request
+- `PUT /api/v1/admin/requests/:id/reject` - Reject request
+
+### Users
+- `GET /api/v1/users` - List users (Admin only)
+- `POST /api/v1/users` - Create user (Admin only)
+- `PUT /api/v1/users/:id` - Update user (Admin only)
+
+## 🔄 Real-Time Features
+
+### WebSocket Integration
+- **Connection:** `ws://localhost:8001?userId={user_id}`
+- **Events:** Request approvals, rejections, system notifications
+- **Auto-reconnection:** Handles connection drops gracefully
+
+### Notification System
+- **Toast Notifications:** Temporary success/error messages
+- **Bell Notifications:** Persistent notification history
+- **Color Coding:** Visual distinction for different message types
+
+## 🛠️ Development Workflow
+
+### Adding New Features
+1. **Frontend:** Create components in appropriate directories
+2. **API Gateway:** Add routes in `api-gateway-node/routes/`
+3. **Backend:** Implement gRPC services in `grpc-server/services/`
+4. **Database:** Update models and migrations
+
+### Error Boundary Implementation
+```javascript
+// Wrap components with ErrorBoundary
+<ErrorBoundary fallbackMessage="Component unavailable">
+  <YourComponent />
+</ErrorBoundary>
 ```
-┌─────────────────┐    ┌────────────────────────┐    ┌─────────────────┐
-│   React Frontend │    │  FastAPI/Node Gateway │    │   gRPC Server   │
-│   (Port 3000)    │◄──►│   (Port 8001)        │◄──►(Port 50051)  │
-└─────────────────┘    └────────────────────────┘    └─────────────────┘
-                                │                        │
-                                │                        │
-                                ▼                        ▼
-                       ┌─────────────────┐    ┌─────────────────┐
-                       │   CORS & Auth   │    │  Business Logic │
-                       │   Validation    │    │  Data Processing│
-                       └─────────────────┘    └─────────────────┘
-                                                        │
-                                                        ▼
-                                              ┌─────────────────┐
-                                              │  PostgreSQL DB  │
-                                              │   (Port 5432)   │
-                                              └─────────────────┘
+
+### Validation Schema Example
+```javascript
+// utils/validationSchemas.js
+export const bookSchema = Yup.object({
+  title: Yup.string().min(2).max(100).required(),
+  author: Yup.string().min(2).max(50).required(),
+  // ... more validation rules
+});
 ```
 
-## 📈 Performance Optimizations
+## 📈 Performance & Scalability
 
-- **Async API Gateway**: All endpoints use async/await for better concurrency
-- **Concurrent gRPC Calls**: Multiple API calls processed simultaneously
-- **Efficient Pagination**: Large datasets loaded in chunks
-- **Database Indexing**: Optimized queries with proper indexes
-- **Connection Pooling**: Reused database connections
-- **Structured Logging**: JSON logs for better monitoring and debugging
+- **Component-level error boundaries** prevent cascading failures
+- **Redux state management** for efficient data flow
+- **gRPC** for high-performance backend communication
+- **WebSocket** for real-time updates without polling
+- **Modular architecture** for easy feature additions
 
 ## 🔒 Security Features
 
-- **Password Hashing**: SHA-256 encryption for user passwords
-- **Role-Based Access**: Admin and User roles with different permissions
-- **Input Validation**: Pydantic models for API request validation
-- **CORS Configuration**: Proper cross-origin resource sharing setup
-- **SQL Injection Prevention**: SQLAlchemy ORM with parameterized queries
+- JWT token-based authentication
+- Role-based access control
+- Input validation on client and server
+- SQL injection prevention through ORM
+- CORS configuration for API security
 
-## 📝 Business Rules
+## 📝 Recent Enhancements
 
-- **Borrowing Limit**: Users can borrow maximum 3 books simultaneously
-- **Loan Period**: 30-day borrowing period for all books
-- **Fine System**: ₹10 per day for overdue books
-- **Request Workflow**: User requests → Admin approval → Automatic processing
-- **Inventory Management**: Automatic available copies tracking
-- **Admin Override**: Admins can directly issue/return books
-
-## 🧪 Testing
-
-The system includes comprehensive testing infrastructure:
-
-### Unit Tests
-- **gRPC Service Tests**: Core business logic validation
-- **API Gateway Tests**: Endpoint and integration testing
-- **Docker-based Testing**: Isolated test environment
-
-### Test Execution
-```bash
-# Run all tests
-python run_tests.py
-
-# Run specific service tests
-docker-compose -f docker-compose.test.yml up --build
-```
-
-### Sample Test Scenarios
-- User authentication and authorization
-- Book search and filtering
-- Request workflow (create → approve → process)
-- Fine calculation for overdue books
-- Pagination and data loading
-- Error handling and edge cases
-
-## 📚 Documentation
-
-- **API Documentation**: Available at http://localhost:8001/docs (Swagger UI)
-- **Setup Guide**: Detailed setup instructions in SETUP.md
-- **Testing Guide**: Comprehensive testing documentation in README_TESTS.md
-- **Code Comments**: Inline documentation throughout the codebase
+### v2.0 Features
+- ✅ Enhanced form validation with Formik + Yup
+- ✅ Comprehensive error handling system
+- ✅ Multi-level error boundaries
+- ✅ Real-time WebSocket notifications
+- ✅ Transaction business rule validation
+- ✅ Modular API Gateway architecture
+- ✅ Color-coded notification system
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. Create feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open Pull Request
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- Built with modern microservices architecture
-- Inspired by real-world library management needs
-- Designed for scalability and maintainability
-- Comprehensive sample data for immediate testing
-
----
-
-**Ready to use!** Just run `docker-compose up -d` and access http://localhost:3000 to start exploring the system.
+This project is licensed under the MIT License - see the LICENSE file for details.
