@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import { Search, Book, Filter } from 'lucide-react';
+import { showNotification } from '../../store/slices/uiSlice';
 import '../../styles/BookCatalog.css';
 import '../../styles/BooksTable.css';
 
 const BookCatalog = ({ user }) => {
+  const dispatch = useDispatch();
   const [books, setBooks] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGenre, setSelectedGenre] = useState('');
@@ -14,7 +17,7 @@ const BookCatalog = ({ user }) => {
   const fetchBooks = async (query = '') => {
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:8001/user/books/search?q=${encodeURIComponent(query)}`);
+      const response = await fetch(`http://localhost:8001/api/v1/user/books/search?q=${encodeURIComponent(query)}`);
       const data = await response.json();
       setBooks(data);
       
@@ -47,7 +50,7 @@ const BookCatalog = ({ user }) => {
   // Request book function
   const requestBook = async (bookId) => {
     try {
-      const response = await fetch('http://localhost:8001/user/book-request', {
+      const response = await fetch('http://localhost:8001/api/v1/user/book-request', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -61,13 +64,22 @@ const BookCatalog = ({ user }) => {
       });
       
       if (response.ok) {
-        alert('Book request submitted successfully!');
+        dispatch(showNotification({ 
+          message: 'Book request submitted successfully!', 
+          type: 'success' 
+        }));
       } else {
-        alert('Failed to submit book request');
+        dispatch(showNotification({ 
+          message: 'Failed to submit book request', 
+          type: 'error' 
+        }));
       }
     } catch (error) {
       console.error('Error requesting book:', error);
-      alert('Error submitting request');
+      dispatch(showNotification({ 
+        message: 'Error submitting request', 
+        type: 'error' 
+      }));
     }
   };
 
