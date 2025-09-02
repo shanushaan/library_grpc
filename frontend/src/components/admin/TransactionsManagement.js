@@ -15,7 +15,7 @@ const TransactionsManagement = () => {
   const fetchTransactions = async (page = 1) => {
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:8001/admin/transactions?status=${selectedStatus}&page=${page}&limit=${limit}`);
+      const response = await fetch(`http://localhost:8001/api/v1/admin/transactions?status=${selectedStatus}&page=${page}&limit=${limit}`);
       const data = await response.json();
       
       // Ensure transactions is always an array
