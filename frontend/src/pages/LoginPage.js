@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { BookOpen, User, Lock, Eye, EyeOff } from 'lucide-react';
-import axios from 'axios';
+import { BookOpen, User } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { authService } from '../services/authService';
+import PasswordInput from '../components/common/PasswordInput';
 
-const LoginPage = ({ onLogin }) => {
+const LoginPage = () => {
   const [credentials, setCredentials] = useState({ username: '', password: '' });
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const { login } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -14,10 +16,16 @@ const LoginPage = ({ onLogin }) => {
     setError('');
 
     try {
-      const response = await axios.post('http://localhost:8001/login', credentials);
-      onLogin(response.data);
+      const userData = await authService.login(credentials);
+      login(userData);
     } catch (err) {
-      setError('Invalid username or password');
+      if (err.response?.status === 401) {
+        setError('Invalid username or password');
+      } else if (err.code === 'NETWORK_ERROR') {
+        setError('Network error. Please check your connection.');
+      } else {
+        setError('Login failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -68,24 +76,12 @@ const LoginPage = ({ onLogin }) => {
 
           <div className="form-group">
             <label htmlFor="password">Password</label>
-            <div className="input-wrapper">
-              <Lock className="input-icon" size={20} />
-              <input
-                id="password"
-                type={showPassword ? 'text' : 'password'}
-                value={credentials.password}
-                onChange={(e) => setCredentials({...credentials, password: e.target.value})}
-                placeholder="Enter your password"
-                required
-              />
-              <button
-                type="button"
-                className="password-toggle"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            </div>
+            <PasswordInput
+              value={credentials.password}
+              onChange={(e) => setCredentials({...credentials, password: e.target.value})}
+              placeholder="Enter your password"
+              required
+            />
           </div>
 
           {error && <div className="error-message">{error}</div>}

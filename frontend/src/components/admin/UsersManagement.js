@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Search, UserCheck, UserX, Edit, Plus, X } from 'lucide-react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchUsers, createUser, updateUser, toggleUserStatus } from '../../store/slices/usersSlice';
+import { showNotification } from '../../store/slices/uiSlice';
+import EnhancedDataTable from '../common/EnhancedDataTable';
 import '../../styles/UsersManagement.css';
 import '../../styles/Modal.css';
 
 const UsersManagement = () => {
-  const [users, setUsers] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [selectedRole, setSelectedRole] = useState('');
+  const dispatch = useDispatch();
+  const { data: users, loading } = useSelector(state => state.users);
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [formData, setFormData] = useState({
@@ -18,70 +20,34 @@ const UsersManagement = () => {
     is_active: true
   });
 
-  const fetchUsers = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch('http://localhost:8001/admin/users');
-      const data = await response.json();
-      setUsers(data);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    dispatch(fetchUsers());
+  }, [dispatch]);
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    let matchesFilter = true;
-    if (selectedRole === 'ACTIVE') {
-      matchesFilter = user.is_active;
-    } else if (selectedRole === 'INACTIVE') {
-      matchesFilter = !user.is_active;
-    } else if (selectedRole && selectedRole !== '') {
-      matchesFilter = user.role === selectedRole;
-    }
-    
-    return matchesSearch && matchesFilter;
-  });
+
 
   // Handle create/update user
   const handleSaveUser = async (e) => {
     e.preventDefault();
-    setLoading(true);
     try {
-      const url = editingUser 
-        ? `http://localhost:8001/admin/users/${editingUser.user_id}`
-        : 'http://localhost:8001/admin/users';
-      const method = editingUser ? 'PUT' : 'POST';
-      
       const payload = { ...formData };
       if (editingUser && !payload.password) {
-        delete payload.password; // Don't update password if empty
+        delete payload.password;
       }
       
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      
-      if (response.ok) {
-        await fetchUsers();
-        handleCloseModal();
+      if (editingUser) {
+        await dispatch(updateUser({ userId: editingUser.user_id, userData: payload })).unwrap();
       } else {
-        console.error('Failed to save user');
+        await dispatch(createUser(payload)).unwrap();
       }
+      
+      dispatch(fetchUsers());
+      dispatch(showNotification({ message: 'User saved successfully', type: 'success' }));
+      handleCloseModal();
     } catch (error) {
-      console.error('Error saving user:', error);
-    } finally {
-      setLoading(false);
+      dispatch(showNotification({ message: 'Error saving user', type: 'error' }));
     }
   };
 
@@ -94,24 +60,10 @@ const UsersManagement = () => {
     if (!confirmed) return;
     
     try {
-      const response = await fetch(`http://localhost:8001/admin/users/${userId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: user.username,
-          email: user.email,
-          role: user.role,
-          is_active: !currentStatus
-        })
-      });
-      
-      if (response.ok) {
-        await fetchUsers();
-      } else {
-        console.error('Failed to update user status');
-      }
+      await dispatch(toggleUserStatus(userId)).unwrap();
+      dispatch(showNotification({ message: `User ${action}d successfully`, type: 'success' }));
     } catch (error) {
-      console.error('Error updating user status:', error);
+      dispatch(showNotification({ message: 'Error updating user status', type: 'error' }));
     }
   };
 
@@ -161,37 +113,10 @@ const UsersManagement = () => {
           <h2>Library Users & Members Management</h2>
           <p>Manage library users and members ({users.length} users)</p>
         </div>
-        <div className="header-actions">
-          <button className="btn primary" onClick={handleAddUser}>
-            <Plus size={20} />
-            Add New User
-          </button>
-        </div>
+
       </div>
       
-      <div className="filters-section">
-        <div className="search-box">
-          <Search size={20} />
-          <input
-            type="text"
-            placeholder="Search users..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-        
-        <select 
-          value={selectedRole} 
-          onChange={(e) => setSelectedRole(e.target.value)}
-          className="filter-select"
-        >
-          <option value="">All Users</option>
-          <option value="USER">Users</option>
-          <option value="ADMIN">Admins</option>
-          <option value="ACTIVE">Active Only</option>
-          <option value="INACTIVE">Inactive Only</option>
-        </select>
-      </div>
+
 
       {loading ? (
         <div className="loading-state">
@@ -199,61 +124,76 @@ const UsersManagement = () => {
           <p>Loading users...</p>
         </div>
       ) : (
-        <div className="users-table-container">
-          <table className="users-table">
-            <thead>
-              <tr>
-                <th>Username</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredUsers.map(user => (
-                <tr key={user.user_id}>
-                  <td className="username-cell">{user.username}</td>
-                  <td>{user.email}</td>
-                  <td>
-                    <span className={`role-badge ${user.role.toLowerCase()}`}>
-                      {user.role}
-                    </span>
-                  </td>
-                  <td>
-                    <span className={`status-badge ${user.is_active ? 'active' : 'inactive'}`}>
-                      {user.is_active ? (
-                        <>
-                          <UserCheck size={14} />
-                          Active
-                        </>
-                      ) : (
-                        <>
-                          <UserX size={14} />
-                          Inactive
-                        </>
-                      )}
-                    </span>
-                  </td>
-                  <td>
-                    <div className="table-actions">
-                      <button className="action-btn edit" title="Edit User" onClick={() => handleEditUser(user)}>
-                        <Edit size={14} />
-                      </button>
-                      <button 
-                        className={`action-btn ${user.is_active ? 'deactivate' : 'activate'}`}
-                        title={user.is_active ? 'Deactivate' : 'Activate'}
-                        onClick={() => handleToggleStatus(user.user_id, user.is_active)}
-                      >
-                        {user.is_active ? <UserX size={14} /> : <UserCheck size={14} />}
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <EnhancedDataTable
+          data={users}
+          columns={[
+            { key: 'username', header: 'Username' },
+            { key: 'email', header: 'Email' },
+            { 
+              key: 'role', 
+              header: 'Role',
+              render: (value) => (
+                <span className={`role-badge ${value.toLowerCase()}`}>
+                  {value}
+                </span>
+              )
+            },
+            { 
+              key: 'is_active', 
+              header: 'Status',
+              render: (value) => (
+                <span className={`status-badge ${value ? 'active' : 'inactive'}`}>
+                  {value ? (
+                    <>
+                      <UserCheck size={14} />
+                      Active
+                    </>
+                  ) : (
+                    <>
+                      <UserX size={14} />
+                      Inactive
+                    </>
+                  )}
+                </span>
+              )
+            },
+            {
+              key: 'actions',
+              header: 'Actions',
+              render: (_, user) => (
+                <div className="table-actions">
+                  <button className="action-btn edit" title="Edit User" onClick={() => handleEditUser(user)}>
+                    <Edit size={14} />
+                  </button>
+                  <button 
+                    className={`action-btn ${user.is_active ? 'deactivate' : 'activate'}`}
+                    title={user.is_active ? 'Deactivate' : 'Activate'}
+                    onClick={() => handleToggleStatus(user.user_id, user.is_active)}
+                  >
+                    {user.is_active ? <UserX size={14} /> : <UserCheck size={14} />}
+                  </button>
+                </div>
+              )
+            }
+          ]}
+          keyField="user_id"
+          emptyMessage="No users found"
+          className="users-table"
+          searchable={true}
+          searchPlaceholder="Search users..."
+          filters={[
+            { value: 'USER', label: 'Users', filter: (user) => user.role === 'USER' },
+            { value: 'ADMIN', label: 'Admins', filter: (user) => user.role === 'ADMIN' },
+            { value: 'ACTIVE', label: 'Active Only', filter: (user) => user.is_active },
+            { value: 'INACTIVE', label: 'Inactive Only', filter: (user) => !user.is_active }
+          ]}
+          actions={
+            <button className="btn primary" onClick={handleAddUser}>
+              <Plus size={20} />
+              Add New User
+            </button>
+          }
+        />
       )}
 
       {!loading && filteredUsers.length === 0 && (

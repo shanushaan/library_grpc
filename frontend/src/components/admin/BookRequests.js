@@ -1,48 +1,92 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchBookRequests, approveBookRequest, rejectBookRequest } from '../../store/slices/bookRequestsSlice';
+import { openRejectModal, closeRejectModal, showNotification } from '../../store/slices/uiSlice';
+import RejectModal from '../common/RejectModal';
+import DataTable from '../common/DataTable';
 import '../../styles/BookRequests.css';
 
 const BookRequests = ({ user }) => {
-  const [requests, setRequests] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
-
-  const fetchRequests = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.get('http://localhost:8001/admin/book-requests');
-      setRequests(response.data);
-    } catch (error) {
-      setMessage('Error fetching requests');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const dispatch = useDispatch();
+  const { data: requests, loading } = useSelector(state => state.bookRequests);
+  const { rejectModal } = useSelector(state => state.ui.modals);
+  const notifications = useSelector(state => state.ui.notifications);
 
   const handleApprove = async (requestId) => {
     try {
-      const response = await axios.post(`http://localhost:8001/admin/book-requests/${requestId}/approve`);
-      setMessage(response.data.message);
-      fetchRequests(); // Refresh the list
+      const result = await dispatch(approveBookRequest(requestId)).unwrap();
+      dispatch(showNotification({ message: result.message, type: 'success' }));
     } catch (error) {
-      setMessage(error.response?.data?.detail || 'Error approving request');
+      dispatch(showNotification({ message: 'Error approving request', type: 'error' }));
     }
   };
 
-  const handleReject = async (requestId) => {
-    const notes = prompt('Reason for rejection (optional):');
+  const handleReject = (requestId) => {
+    dispatch(openRejectModal(requestId));
+  };
+
+  const confirmReject = async (notes) => {
     try {
-      const response = await axios.post(`http://localhost:8001/admin/book-requests/${requestId}/reject?notes=${encodeURIComponent(notes || '')}`);
-      setMessage(response.data.message);
-      fetchRequests(); // Refresh the list
+      const result = await dispatch(rejectBookRequest({ requestId: rejectModal.requestId, notes })).unwrap();
+      dispatch(showNotification({ message: result.message, type: 'success' }));
+      dispatch(closeRejectModal());
     } catch (error) {
-      setMessage(error.response?.data?.detail || 'Error rejecting request');
+      dispatch(showNotification({ message: 'Error rejecting request', type: 'error' }));
     }
   };
 
   useEffect(() => {
-    fetchRequests();
-  }, []);
+    dispatch(fetchBookRequests());
+  }, [dispatch]);
+
+  const columns = [
+    { key: 'user_name', header: 'User' },
+    { key: 'book_title', header: 'Book' },
+    { key: 'book_author', header: 'Author' },
+    { 
+      key: 'request_type', 
+      header: 'Type',
+      render: (value) => (
+        <span className={`badge ${value.toLowerCase()}`}>
+          {value}
+        </span>
+      )
+    },
+    { key: 'request_date', header: 'Date' },
+    { 
+      key: 'available_copies', 
+      header: 'Available',
+      render: (value, row) => (
+        row.request_type === 'ISSUE' ? (
+          <span className={value > 0 ? 'available' : 'unavailable'}>
+            {value} copies
+          </span>
+        ) : 'N/A'
+      )
+    },
+    { key: 'notes', header: 'Notes', render: (value) => value || '-' },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (_, row) => (
+        <div className="actions">
+          <button 
+            onClick={() => handleApprove(row.request_id)}
+            className="btn-approve"
+            disabled={row.request_type === 'ISSUE' && row.available_copies <= 0}
+          >
+            Approve
+          </button>
+          <button 
+            onClick={() => handleReject(row.request_id)}
+            className="btn-reject"
+          >
+            Reject
+          </button>
+        </div>
+      )
+    }
+  ];
 
   if (loading) return <div>Loading...</div>;
 
@@ -50,70 +94,26 @@ const BookRequests = ({ user }) => {
     <div className="book-requests">
       <h2>Pending Book Requests</h2>
       
-      {message && <div className="message">{message}</div>}
-
-      {requests.length === 0 ? (
-        <p>No pending requests</p>
-      ) : (
-        <div className="requests-table">
-          <table>
-            <thead>
-              <tr>
-                <th>User</th>
-                <th>Book</th>
-                <th>Author</th>
-                <th>Type</th>
-                <th>Date</th>
-                <th>Available</th>
-                <th>Notes</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {requests.map(request => (
-                <tr key={request.request_id}>
-                  <td>{request.user_name}</td>
-                  <td>{request.book_title}</td>
-                  <td>{request.book_author}</td>
-                  <td>
-                    <span className={`badge ${request.request_type.toLowerCase()}`}>
-                      {request.request_type}
-                    </span>
-                  </td>
-                  <td>{request.request_date}</td>
-                  <td>
-                    {request.request_type === 'ISSUE' ? (
-                      <span className={request.available_copies > 0 ? 'available' : 'unavailable'}>
-                        {request.available_copies} copies
-                      </span>
-                    ) : (
-                      'N/A'
-                    )}
-                  </td>
-                  <td>{request.notes || '-'}</td>
-                  <td>
-                    <div className="actions">
-                      <button 
-                        onClick={() => handleApprove(request.request_id)}
-                        className="btn-approve"
-                        disabled={request.request_type === 'ISSUE' && request.available_copies <= 0}
-                      >
-                        Approve
-                      </button>
-                      <button 
-                        onClick={() => handleReject(request.request_id)}
-                        className="btn-reject"
-                      >
-                        Reject
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {notifications.map(notification => (
+        <div key={notification.id} className={`message ${notification.type}`}>
+          {notification.message}
         </div>
-      )}
+      ))}
+
+      <DataTable
+        data={requests}
+        columns={columns}
+        keyField="request_id"
+        emptyMessage="No pending requests"
+        className="requests-table"
+      />
+      
+      <RejectModal
+        isOpen={rejectModal.isOpen}
+        onClose={() => dispatch(closeRejectModal())}
+        onConfirm={confirmReject}
+        title="Reject Book Request"
+      />
     </div>
   );
 };

@@ -1,46 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { BookOpen, Users, Receipt, AlertCircle } from 'lucide-react';
-import axios from 'axios';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchUsers } from '../../store/slices/usersSlice';
+import { fetchBooks } from '../../store/slices/booksSlice';
+import StatCard from '../common/StatCard';
 
 const DashboardOverview = () => {
-  const [stats, setStats] = useState({
-    totalBooks: 0,
-    activeUsers: 0,
-    borrowedBooks: 0,
-    overdueBooks: 0
-  });
-  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
+  const { data: users, loading: usersLoading } = useSelector(state => state.users);
+  const { data: books, loading: booksLoading } = useSelector(state => state.books);
+  
+  const loading = usersLoading || booksLoading;
+  
+  const stats = {
+    totalBooks: books.length,
+    activeUsers: users.filter(u => u.is_active).length,
+    borrowedBooks: 0, // TODO: Add transactions slice
+    overdueBooks: 0   // TODO: Add transactions slice
+  };
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const [booksResponse, usersResponse, statsResponse] = await Promise.all([
-          axios.get('http://localhost:8001/admin/books'),
-          axios.get('http://localhost:8001/admin/users'),
-          axios.get('http://localhost:8001/admin/stats')
-        ]);
-        
-        setStats({
-          totalBooks: Array.isArray(booksResponse.data) ? booksResponse.data.length : 0,
-          activeUsers: Array.isArray(usersResponse.data) ? usersResponse.data.filter(u => u.is_active).length : 0,
-          borrowedBooks: statsResponse.data.borrowed_books || 0,
-          overdueBooks: statsResponse.data.overdue_books || 0
-        });
-      } catch (error) {
-        console.error('Error fetching stats:', error);
-        setStats({
-          totalBooks: 0,
-          activeUsers: 0,
-          borrowedBooks: 0,
-          overdueBooks: 0
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStats();
-  }, []);
+    dispatch(fetchUsers());
+    dispatch(fetchBooks());
+  }, [dispatch]);
 
   const statCards = [
     { label: 'Total Books', value: stats.totalBooks, icon: BookOpen, color: 'blue' },
@@ -69,15 +51,13 @@ const DashboardOverview = () => {
           <div>Loading stats...</div>
         ) : (
           statCards.map((stat, index) => (
-            <div key={index} className={`stat-card ${stat.color}`}>
-              <div className="stat-icon">
-                <stat.icon size={24} />
-              </div>
-              <div className="stat-content">
-                <h3 className="stat-value">{stat.value}</h3>
-                <p className="stat-label">{stat.label}</p>
-              </div>
-            </div>
+            <StatCard
+              key={index}
+              label={stat.label}
+              value={stat.value}
+              icon={stat.icon}
+              color={stat.color}
+            />
           ))
         )}
       </div>

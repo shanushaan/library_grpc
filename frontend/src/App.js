@@ -1,90 +1,76 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Provider } from 'react-redux';
+import { store } from './store';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginPage from './pages/LoginPage';
 import AdminDashboard from './pages/AdminDashboard';
 import UserDashboard from './pages/UserDashboard';
+import LoadingScreen from './components/common/LoadingScreen';
+import ProtectedRoute from './components/common/ProtectedRoute';
 import './styles/App.css';
 import './styles/UserDashboard.css';
 
-function App() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Check if user is already logged in
-    const savedUser = localStorage.getItem('library_user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-    setLoading(false);
-  }, []);
-
-  const handleLogin = (userData) => {
-    setUser(userData);
-    localStorage.setItem('library_user', JSON.stringify(userData));
-  };
-
-  const handleLogout = () => {
-    setUser(null);
-    localStorage.removeItem('library_user');
-  };
+const AppRoutes = () => {
+  const { user, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="loading-screen">
-        <div className="loading-spinner"></div>
-        <p>Loading Library Management System...</p>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   return (
-    <Router>
-      <div className="App">
-        <Routes>
-          <Route 
-            path="/login" 
-            element={
-              user ? (
-                <Navigate to={user.role === 'ADMIN' ? '/admin' : '/dashboard'} />
-              ) : (
-                <LoginPage onLogin={handleLogin} />
-              )
-            } 
-          />
-          <Route 
-            path="/admin/*" 
-            element={
-              user && user.role === 'ADMIN' ? (
-                <AdminDashboard user={user} onLogout={handleLogout} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            } 
-          />
-          <Route 
-            path="/dashboard/*" 
-            element={
-              user && user.role === 'USER' ? (
-                <UserDashboard user={user} onLogout={handleLogout} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            } 
-          />
-          <Route 
-            path="/" 
-            element={
-              user ? (
-                <Navigate to={user.role === 'ADMIN' ? '/admin' : '/dashboard'} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            } 
-          />
-        </Routes>
-      </div>
-    </Router>
+    <Routes>
+      <Route 
+        path="/login" 
+        element={
+          user ? (
+            <Navigate to={user.role === 'ADMIN' ? '/admin' : '/dashboard'} replace />
+          ) : (
+            <LoginPage />
+          )
+        } 
+      />
+      <Route 
+        path="/admin/*" 
+        element={
+          <ProtectedRoute requiredRole="ADMIN">
+            <AdminDashboard />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/dashboard/*" 
+        element={
+          <ProtectedRoute requiredRole="USER">
+            <UserDashboard />
+          </ProtectedRoute>
+        } 
+      />
+      <Route 
+        path="/" 
+        element={
+          user ? (
+            <Navigate to={user.role === 'ADMIN' ? '/admin' : '/dashboard'} replace />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        } 
+      />
+    </Routes>
+  );
+};
+
+function App() {
+  return (
+    <Provider store={store}>
+      <AuthProvider>
+        <Router>
+          <div className="App">
+            <AppRoutes />
+          </div>
+        </Router>
+      </AuthProvider>
+    </Provider>
   );
 }
 

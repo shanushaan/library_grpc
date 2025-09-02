@@ -43,6 +43,9 @@ logger.propagate = False
 
 app = FastAPI(title="Library API Gateway")
 
+# API versioning
+API_V1_PREFIX = "/api/v1"
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -81,8 +84,11 @@ class UserBookRequest(BaseModel):
     transaction_id: int = None
     notes: str = None
 
+class RejectBookRequestBody(BaseModel):
+    notes: str = ""
+
 # Authentication endpoints
-@app.post("/login")
+@app.post(f"{API_V1_PREFIX}/login")
 async def login(request: LoginRequest):
     logger.info("Login attempt", extra={"username": request.username, "endpoint": "/login"})
     client = await get_grpc_client()
@@ -114,7 +120,7 @@ async def login(request: LoginRequest):
         raise HTTPException(status_code=500, detail="Service unavailable")
 
 # Book endpoints
-@app.get("/user/books/search")
+@app.get(f"{API_V1_PREFIX}/user/books/search")
 async def search_books(q: str = ""):
     logger.info(f"Book search request with query: '{q}'")
     client = await get_grpc_client()
@@ -141,13 +147,13 @@ async def search_books(q: str = ""):
         logger.error(f"gRPC Error during book search: {e.details()}")
         raise HTTPException(status_code=500, detail="Service unavailable")
 
-@app.get("/admin/books")
+@app.get(f"{API_V1_PREFIX}/admin/books")
 def list_books_admin(q: str = ""):
     logger.info(f"Admin book list request with query: '{q}'")
     return search_books(q)
 
 # Admin book operations
-@app.post("/admin/issue-book")
+@app.post(f"{API_V1_PREFIX}/admin/issue-book")
 def issue_book(request: IssueBookRequest):
     logger.info(f"Admin issuing book: book_id={request.book_id}, user_id={request.user_id}")
     client = get_grpc_client()
@@ -173,7 +179,7 @@ def issue_book(request: IssueBookRequest):
         logger.error(f"gRPC Error during book issue: book_id={request.book_id}, user_id={request.user_id} - {e.details()}")
         raise HTTPException(status_code=500, detail="Service unavailable")
 
-@app.post("/admin/return-book")
+@app.post(f"{API_V1_PREFIX}/admin/return-book")
 def return_book(request: ReturnBookRequest):
     client = get_grpc_client()
     try:
@@ -196,7 +202,7 @@ def return_book(request: ReturnBookRequest):
         raise HTTPException(status_code=500, detail="Service unavailable")
 
 # User request endpoints
-@app.post("/user/book-request")
+@app.post(f"{API_V1_PREFIX}/user/book-request")
 def create_book_request(request: UserBookRequest):
     logger.info(f"Book request created: user_id={request.user_id}, book_id={request.book_id}, type={request.request_type}")
     client = get_grpc_client()
@@ -225,7 +231,7 @@ def create_book_request(request: UserBookRequest):
         logger.error(f"gRPC Error during book request: user_id={request.user_id}, book_id={request.book_id} - {e.details()}")
         raise HTTPException(status_code=500, detail="Service unavailable")
 
-@app.get("/admin/book-requests")
+@app.get(f"{API_V1_PREFIX}/admin/book-requests")
 async def list_book_requests():
     logger.info("Admin fetching book requests")
     client = await get_grpc_client()
@@ -264,7 +270,7 @@ async def list_book_requests():
     except grpc.RpcError as e:
         raise HTTPException(status_code=500, detail="Service unavailable")
 
-@app.get("/user/{user_id}/book-requests")
+@app.get(f"{API_V1_PREFIX}/user/{{user_id}}/book-requests")
 def get_user_book_requests(user_id: int):
     logger.info(f"Fetching book requests for user: user_id={user_id}")
     client = get_grpc_client()
@@ -300,7 +306,7 @@ def get_user_book_requests(user_id: int):
     except grpc.RpcError as e:
         raise HTTPException(status_code=500, detail="Service unavailable")
 
-@app.post("/admin/book-requests/{request_id}/approve")
+@app.post(f"{API_V1_PREFIX}/admin/book-requests/{{request_id}}/approve")
 def approve_book_request(request_id: int):
     logger.info(f"Admin approving book request: request_id={request_id}")
     client = get_grpc_client()
@@ -322,15 +328,15 @@ def approve_book_request(request_id: int):
         logger.error(f"gRPC Error during book request approval: request_id={request_id} - {e.details()}")
         raise HTTPException(status_code=500, detail="Service unavailable")
 
-@app.post("/admin/book-requests/{request_id}/reject")
-def reject_book_request(request_id: int, notes: str = ""):
+@app.post(f"{API_V1_PREFIX}/admin/book-requests/{{request_id}}/reject")
+def reject_book_request(request_id: int, request_body: RejectBookRequestBody):
     client = get_grpc_client()
     try:
         response = client.RejectBookRequest(
             library_service_pb2.RejectBookRequestReq(
                 request_id=request_id,
                 admin_id=1,  # TODO: Get from auth
-                notes=notes
+                notes=request_body.notes
             )
         )
         
@@ -341,7 +347,7 @@ def reject_book_request(request_id: int, notes: str = ""):
     except grpc.RpcError as e:
         raise HTTPException(status_code=500, detail="Service unavailable")
 
-@app.get("/admin/users")
+@app.get(f"{API_V1_PREFIX}/admin/users")
 def list_users():
     logger.info("Admin fetching users list")
     client = get_grpc_client()
@@ -364,7 +370,7 @@ def list_users():
     except grpc.RpcError as e:
         raise HTTPException(status_code=500, detail="Service unavailable")
 
-@app.get("/admin/transactions")
+@app.get(f"{API_V1_PREFIX}/admin/transactions")
 def list_transactions(user_id: int = None, status: str = ""):
     client = get_grpc_client()
     try:
@@ -402,7 +408,7 @@ def list_transactions(user_id: int = None, status: str = ""):
     except grpc.RpcError as e:
         raise HTTPException(status_code=500, detail="Service unavailable")
 
-@app.get("/user/{user_id}/stats")
+@app.get(f"{API_V1_PREFIX}/user/{{user_id}}/stats")
 def get_user_stats(user_id: int):
     logger.info(f"Fetching user stats: user_id={user_id}")
     client = get_grpc_client()
@@ -423,7 +429,7 @@ def get_user_stats(user_id: int):
         logger.error(f"gRPC Error fetching user stats: user_id={user_id} - {e.details()}")
         raise HTTPException(status_code=500, detail="Service unavailable")
 
-@app.get("/user/{user_id}/transactions")
+@app.get(f"{API_V1_PREFIX}/user/{{user_id}}/transactions")
 def get_user_transactions(user_id: int, status: str = ""):
     client = get_grpc_client()
     try:

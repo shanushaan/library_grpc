@@ -38,8 +38,11 @@ const grpcCall = (method, request) => {
   });
 };
 
+// API versioning
+const API_V1 = '/api/v1';
+
 // Routes
-app.post('/login', async (req, res) => {
+app.post(`${API_V1}/login`, async (req, res) => {
   try {
     const response = await grpcCall('AuthenticateUser', {
       username: req.body.username,
@@ -62,7 +65,7 @@ app.post('/login', async (req, res) => {
   }
 });
 
-app.get('/user/books/search', async (req, res) => {
+app.get(`${API_V1}/user/books/search`, async (req, res) => {
   try {
     const response = await grpcCall('GetBooks', { search_query: req.query.q || '' });
     const books = response.books.map(book => ({
@@ -80,7 +83,7 @@ app.get('/user/books/search', async (req, res) => {
   }
 });
 
-app.post('/user/book-request', async (req, res) => {
+app.post(`${API_V1}/user/book-request`, async (req, res) => {
   try {
     const response = await grpcCall('CreateUserBookRequest', {
       user_id: req.body.user_id,
@@ -104,7 +107,7 @@ app.post('/user/book-request', async (req, res) => {
   }
 });
 
-app.get('/admin/books', async (req, res) => {
+app.get(`${API_V1}/admin/books`, async (req, res) => {
   try {
     const response = await grpcCall('GetBooks', { search_query: req.query.q || '' });
     const books = response.books.map(book => ({
@@ -121,7 +124,7 @@ app.get('/admin/books', async (req, res) => {
   }
 });
 
-app.get('/admin/users', async (req, res) => {
+app.get(`${API_V1}/admin/users`, async (req, res) => {
   try {
     const response = await grpcCall('GetUsers', {});
     const users = response.users.map(user => ({
@@ -137,7 +140,7 @@ app.get('/admin/users', async (req, res) => {
   }
 });
 
-app.post('/admin/issue-book', async (req, res) => {
+app.post(`${API_V1}/admin/issue-book`, async (req, res) => {
   try {
     const response = await grpcCall('IssueBook', {
       book_id: req.body.book_id,
@@ -158,7 +161,7 @@ app.post('/admin/issue-book', async (req, res) => {
   }
 });
 
-app.post('/admin/return-book', async (req, res) => {
+app.post(`${API_V1}/admin/return-book`, async (req, res) => {
   try {
     const response = await grpcCall('ReturnBook', {
       transaction_id: req.body.transaction_id,
@@ -179,7 +182,7 @@ app.post('/admin/return-book', async (req, res) => {
   }
 });
 
-app.get('/admin/transactions', async (req, res) => {
+app.get(`${API_V1}/admin/transactions`, async (req, res) => {
   try {
     const [transactionsResponse, usersResponse, booksResponse] = await Promise.all([
       grpcCall('GetTransactions', {
@@ -232,7 +235,7 @@ app.get('/admin/transactions', async (req, res) => {
   }
 });
 
-app.post('/admin/books', async (req, res) => {
+app.post(`${API_V1}/admin/books`, async (req, res) => {
   try {
     const response = await grpcCall('CreateBook', {
       title: req.body.title,
@@ -255,7 +258,7 @@ app.post('/admin/books', async (req, res) => {
   }
 });
 
-app.put('/admin/books/:book_id', async (req, res) => {
+app.put(`${API_V1}/admin/books/:book_id`, async (req, res) => {
   try {
     const response = await grpcCall('UpdateBook', {
       book_id: parseInt(req.params.book_id),
@@ -276,7 +279,7 @@ app.put('/admin/books/:book_id', async (req, res) => {
   }
 });
 
-app.delete('/admin/books/:book_id', async (req, res) => {
+app.delete(`${API_V1}/admin/books/:book_id`, async (req, res) => {
   try {
     const response = await grpcCall('DeleteBook', {
       book_id: parseInt(req.params.book_id)
@@ -292,7 +295,7 @@ app.delete('/admin/books/:book_id', async (req, res) => {
   }
 });
 
-app.post('/admin/users', async (req, res) => {
+app.post(`${API_V1}/admin/users`, async (req, res) => {
   try {
     const response = await grpcCall('CreateUser', {
       username: req.body.username,
@@ -314,7 +317,7 @@ app.post('/admin/users', async (req, res) => {
   }
 });
 
-app.put('/admin/users/:user_id', async (req, res) => {
+app.put(`${API_V1}/admin/users/:user_id`, async (req, res) => {
   try {
     const response = await grpcCall('UpdateUser', {
       user_id: parseInt(req.params.user_id),
@@ -335,7 +338,7 @@ app.put('/admin/users/:user_id', async (req, res) => {
   }
 });
 
-app.get('/user/:user_id/stats', async (req, res) => {
+app.get(`${API_V1}/user/:user_id/stats`, async (req, res) => {
   try {
     const response = await grpcCall('GetUserStats', {
       user_id: parseInt(req.params.user_id)
@@ -352,7 +355,7 @@ app.get('/user/:user_id/stats', async (req, res) => {
   }
 });
 
-app.get('/user/:user_id/transactions', async (req, res) => {
+app.get(`${API_V1}/user/:user_id/transactions`, async (req, res) => {
   try {
     const userId = parseInt(req.params.user_id);
     const status = req.query.status || '';
@@ -381,7 +384,7 @@ app.get('/user/:user_id/transactions', async (req, res) => {
   }
 });
 
-app.get('/user/:user_id/book-requests', async (req, res) => {
+app.get(`${API_V1}/user/:user_id/book-requests`, async (req, res) => {
   try {
     const userId = parseInt(req.params.user_id);
     const [requestsResponse, booksResponse] = await Promise.all([
@@ -417,7 +420,7 @@ app.get('/user/:user_id/book-requests', async (req, res) => {
   }
 });
 
-app.get('/admin/book-requests', async (req, res) => {
+app.get(`${API_V1}/admin/book-requests`, async (req, res) => {
   try {
     const [requestsResponse, booksResponse, usersResponse] = await Promise.all([
       grpcCall('GetBookRequests', { status: 'PENDING' }),
@@ -458,7 +461,7 @@ app.get('/admin/book-requests', async (req, res) => {
   }
 });
 
-app.post('/admin/book-requests/:request_id/approve', async (req, res) => {
+app.post(`${API_V1}/admin/book-requests/:request_id/approve`, async (req, res) => {
   try {
     const requestId = parseInt(req.params.request_id);
     const response = await grpcCall('ApproveBookRequest', {
@@ -476,7 +479,7 @@ app.post('/admin/book-requests/:request_id/approve', async (req, res) => {
   }
 });
 
-app.post('/admin/book-requests/:request_id/reject', async (req, res) => {
+app.post(`${API_V1}/admin/book-requests/:request_id/reject`, async (req, res) => {
   try {
     const requestId = parseInt(req.params.request_id);
     const response = await grpcCall('RejectBookRequest', {
@@ -495,7 +498,7 @@ app.post('/admin/book-requests/:request_id/reject', async (req, res) => {
   }
 });
 
-app.get('/admin/stats', async (req, res) => {
+app.get(`${API_V1}/admin/stats`, async (req, res) => {
   try {
     const response = await grpcCall('GetTransactions', { user_id: 0, status: '' });
     const borrowedCount = response.transactions.filter(txn => txn.status === 'BORROWED').length;
