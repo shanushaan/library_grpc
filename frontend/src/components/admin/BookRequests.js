@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchBookRequests, approveBookRequest, rejectBookRequest, optimisticApprove, optimisticReject } from '../../store/slices/bookRequestsSlice';
+import { fetchBookRequests, approveBookRequest, rejectBookRequest } from '../../store/slices/bookRequestsSlice';
 import { openRejectModal, closeRejectModal, showNotification } from '../../store/slices/uiSlice';
 import RejectModal from '../common/RejectModal';
 import DataTable from '../common/DataTable';
@@ -12,16 +12,11 @@ const BookRequests = ({ user }) => {
   const { rejectModal } = useSelector(state => state.ui.modals);
 
   const handleApprove = async (requestId) => {
-    // Optimistic update
-    dispatch(optimisticApprove(requestId));
-    dispatch(showNotification({ message: 'Approving request...', type: 'info' }));
-    
     try {
       const result = await dispatch(approveBookRequest(requestId)).unwrap();
       dispatch(showNotification({ message: result.message, type: 'success' }));
     } catch (error) {
       dispatch(showNotification({ message: 'Error approving request', type: 'error' }));
-      dispatch(fetchBookRequests()); // Revert optimistic update
     }
   };
 
@@ -32,17 +27,12 @@ const BookRequests = ({ user }) => {
   const confirmReject = async (notes) => {
     const requestId = rejectModal.requestId;
     
-    // Optimistic update
-    dispatch(optimisticReject(requestId));
-    dispatch(closeRejectModal());
-    dispatch(showNotification({ message: 'Rejecting request...', type: 'info' }));
-    
     try {
       const result = await dispatch(rejectBookRequest({ requestId, notes })).unwrap();
       dispatch(showNotification({ message: result.message, type: 'success' }));
+      dispatch(closeRejectModal());
     } catch (error) {
       dispatch(showNotification({ message: 'Error rejecting request', type: 'error' }));
-      dispatch(fetchBookRequests()); // Revert optimistic update
     }
   };
 

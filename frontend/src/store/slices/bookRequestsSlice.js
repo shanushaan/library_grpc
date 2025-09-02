@@ -32,18 +32,7 @@ const bookRequestsSlice = createSlice({
     loading: false,
     error: null,
   },
-  reducers: {
-    optimisticApprove: (state, action) => {
-      state.data = state.data.filter(req => req.request_id !== action.payload);
-    },
-    optimisticReject: (state, action) => {
-      state.data = state.data.filter(req => req.request_id !== action.payload);
-    },
-    revertOptimistic: (state, action) => {
-      // Revert optimistic update on error
-      state.data = action.payload;
-    },
-  },
+  reducers: {},
   extraReducers: (builder) => {
     builder
       .addCase(fetchBookRequests.pending, (state) => {
@@ -58,28 +47,13 @@ const bookRequestsSlice = createSlice({
         state.loading = false;
         state.error = action.error.message;
       })
-      .addCase(approveBookRequest.pending, (state, action) => {
-        // Optimistic update already done
-      })
       .addCase(approveBookRequest.fulfilled, (state, action) => {
-        // Already updated optimistically
-      })
-      .addCase(approveBookRequest.rejected, (state, action) => {
-        // Revert optimistic update
-        dispatch(fetchBookRequests());
-      })
-      .addCase(rejectBookRequest.pending, (state, action) => {
-        // Optimistic update already done
+        state.data = state.data.filter(req => req.request_id !== action.payload.requestId);
       })
       .addCase(rejectBookRequest.fulfilled, (state, action) => {
-        // Already updated optimistically
-      })
-      .addCase(rejectBookRequest.rejected, (state, action) => {
-        // Revert optimistic update
-        dispatch(fetchBookRequests());
+        state.data = state.data.filter(req => req.request_id !== action.payload.requestId);
       });
   },
 });
 
-export const { optimisticApprove, optimisticReject, revertOptimistic } = bookRequestsSlice.actions;
 export default bookRequestsSlice.reducer;
