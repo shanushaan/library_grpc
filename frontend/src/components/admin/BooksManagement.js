@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Search, Filter, Edit, Trash2, Eye, Book, X, UserPlus, UserMinus } from 'lucide-react';
+import { useDispatch } from 'react-redux';
+import { showNotification } from '../../store/slices/uiSlice';
+import ConfirmModal from '../common/ConfirmModal';
 import '../../styles/BookCatalog.css';
 import '../../styles/AdminBooks.css';
 import '../../styles/BooksTable.css';
 import '../../styles/Modal.css';
 
 const BooksManagement = () => {
+  const dispatch = useDispatch();
   const [books, setBooks] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGenre, setSelectedGenre] = useState('');
@@ -23,6 +27,7 @@ const BooksManagement = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [bookBorrowCounts, setBookBorrowCounts] = useState({});
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, bookId: null, bookTitle: '' });
   const [formData, setFormData] = useState({
     title: '',
     author: '',
@@ -36,8 +41,8 @@ const BooksManagement = () => {
     setLoading(true);
     try {
       const [booksResponse, transactionsResponse] = await Promise.all([
-        fetch(`http://localhost:8001/admin/books?q=${encodeURIComponent(query)}`),
-        fetch('http://localhost:8001/admin/transactions?status=BORROWED')
+        fetch(`http://localhost:8001/api/v1/admin/books?q=${encodeURIComponent(query)}`),
+        fetch('http://localhost:8001/api/v1/admin/transactions?status=BORROWED')
       ]);
       
       const booksData = await booksResponse.json();
@@ -65,7 +70,7 @@ const BooksManagement = () => {
   // Fetch users for issue modal
   const fetchUsers = async () => {
     try {
-      const response = await fetch('http://localhost:8001/admin/users');
+      const response = await fetch('http://localhost:8001/api/v1/admin/users');
       const data = await response.json();
       setUsers(data.filter(user => user.is_active && user.role === 'USER'));
     } catch (error) {
@@ -76,7 +81,7 @@ const BooksManagement = () => {
   // Fetch borrowed transactions for return modal
   const fetchBorrowedTransactions = async (bookId) => {
     try {
-      const response = await fetch('http://localhost:8001/admin/transactions?status=BORROWED');
+      const response = await fetch('http://localhost:8001/api/v1/admin/transactions?status=BORROWED');
       const data = await response.json();
       const bookTransactions = data.transactions.filter(txn => txn.book_id === bookId);
       setBorrowedTransactions(bookTransactions);
@@ -107,8 +112,8 @@ const BooksManagement = () => {
     setLoading(true);
     try {
       const url = editingBook 
-        ? `http://localhost:8001/admin/books/${editingBook.book_id}`
-        : 'http://localhost:8001/admin/books';
+        ? `http://localhost:8001/api/v1/admin/books/${editingBook.book_id}`
+        : 'http://localhost:8001/api/v1/admin/books';
       const method = editingBook ? 'PUT' : 'POST';
       
       const response = await fetch(url, {
@@ -124,8 +129,9 @@ const BooksManagement = () => {
       if (response.ok) {
         await fetchBooks();
         handleCloseModal();
+        dispatch(showNotification({ message: `Book ${editingBook ? 'updated' : 'created'} successfully`, type: 'success' }));
       } else {
-        console.error('Failed to save book');
+        dispatch(showNotification({ message: 'Failed to save book', type: 'error' }));
       }
     } catch (error) {
       console.error('Error saving book:', error);
@@ -135,22 +141,31 @@ const BooksManagement = () => {
   };
 
   // Handle delete book
-  const handleDeleteBook = async (bookId) => {
-    if (!window.confirm('Are you sure you want to delete this book?')) return;
-    
+  const handleDeleteBook = (book) => {
+    setConfirmModal({
+      isOpen: true,
+      bookId: book.book_id,
+      bookTitle: book.title,
+      message: `Are you sure you want to delete "${book.title}"? This action cannot be undone.`
+    });
+  };
+
+  const confirmDeleteBook = async () => {
     try {
-      const response = await fetch(`http://localhost:8001/admin/books/${bookId}`, {
+      const response = await fetch(`http://localhost:8001/api/v1/admin/books/${confirmModal.bookId}`, {
         method: 'DELETE'
       });
       
       if (response.ok) {
         await fetchBooks();
+        dispatch(showNotification({ message: 'Book deleted successfully', type: 'success' }));
       } else {
-        console.error('Failed to delete book');
+        dispatch(showNotification({ message: 'Failed to delete book', type: 'error' }));
       }
     } catch (error) {
-      console.error('Error deleting book:', error);
+      dispatch(showNotification({ message: 'Error deleting book', type: 'error' }));
     }
+    setConfirmModal({ isOpen: false, bookId: null, bookTitle: '' });
   };
 
   // Handle edit book
@@ -213,7 +228,7 @@ const BooksManagement = () => {
     
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:8001/admin/issue-book', {
+      const response = await fetch('http://localhost:8001/api/v1/admin/issue-book', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -225,8 +240,9 @@ const BooksManagement = () => {
       if (response.ok) {
         await fetchBooks();
         handleCloseIssueModal();
+        dispatch(showNotification({ message: 'Book issued successfully', type: 'success' }));
       } else {
-        console.error('Failed to issue book');
+        dispatch(showNotification({ message: 'Failed to issue book', type: 'error' }));
       }
     } catch (error) {
       console.error('Error issuing book:', error);
@@ -262,7 +278,7 @@ const BooksManagement = () => {
     
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:8001/admin/return-book', {
+      const response = await fetch('http://localhost:8001/api/v1/admin/return-book', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -273,8 +289,9 @@ const BooksManagement = () => {
       if (response.ok) {
         await fetchBooks();
         handleCloseReturnModal();
+        dispatch(showNotification({ message: 'Book returned successfully', type: 'success' }));
       } else {
-        console.error('Failed to return book');
+        dispatch(showNotification({ message: 'Failed to return book', type: 'error' }));
       }
     } catch (error) {
       console.error('Error returning book:', error);
@@ -393,7 +410,7 @@ const BooksManagement = () => {
                         <button className="action-btn edit" title="Edit" onClick={() => handleEditBook(book)}>
                           <Edit size={14} />
                         </button>
-                        <button className="action-btn delete" title="Delete" onClick={() => handleDeleteBook(book.book_id)}>
+                        <button className="action-btn delete" title="Delete" onClick={() => handleDeleteBook(book)}>
                           <Trash2 size={14} />
                         </button>
                       </div>
@@ -596,6 +613,16 @@ const BooksManagement = () => {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ isOpen: false, bookId: null, bookTitle: '' })}
+        onConfirm={confirmDeleteBook}
+        title="Delete Book"
+        message={confirmModal.message}
+        confirmText="Delete"
+        type="danger"
+      />
     </div>
   );
 };

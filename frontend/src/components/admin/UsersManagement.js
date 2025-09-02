@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchUsers, createUser, updateUser, toggleUserStatus } from '../../store/slices/usersSlice';
 import { showNotification } from '../../store/slices/uiSlice';
 import EnhancedDataTable from '../common/EnhancedDataTable';
+import ConfirmModal from '../common/ConfirmModal';
 import '../../styles/UsersManagement.css';
 import '../../styles/Modal.css';
 
@@ -12,6 +13,7 @@ const UsersManagement = () => {
   const { data: users, loading } = useSelector(state => state.users);
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, user: null, action: '' });
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -52,19 +54,25 @@ const UsersManagement = () => {
   };
 
   // Handle toggle user status
-  const handleToggleStatus = async (userId, currentStatus) => {
+  const handleToggleStatus = (userId, currentStatus) => {
     const user = users.find(u => u.user_id === userId);
     const action = currentStatus ? 'deactivate' : 'activate';
-    const confirmed = window.confirm(`Are you sure you want to ${action} user "${user.username}"?`);
-    
-    if (!confirmed) return;
-    
+    setConfirmModal({
+      isOpen: true,
+      user,
+      action,
+      message: `Are you sure you want to ${action} user "${user.username}"?`
+    });
+  };
+
+  const confirmToggleStatus = async () => {
     try {
-      await dispatch(toggleUserStatus(userId)).unwrap();
-      dispatch(showNotification({ message: `User ${action}d successfully`, type: 'success' }));
+      await dispatch(toggleUserStatus(confirmModal.user.user_id)).unwrap();
+      dispatch(showNotification({ message: `User ${confirmModal.action}d successfully`, type: 'success' }));
     } catch (error) {
       dispatch(showNotification({ message: 'Error updating user status', type: 'error' }));
     }
+    setConfirmModal({ isOpen: false, user: null, action: '' });
   };
 
   // Handle edit user
@@ -196,13 +204,7 @@ const UsersManagement = () => {
         />
       )}
 
-      {!loading && filteredUsers.length === 0 && (
-        <div className="no-results">
-          <UserCheck size={48} />
-          <h3>No users found</h3>
-          <p>Try adjusting your search terms or filters</p>
-        </div>
-      )}
+
 
       {/* User Modal */}
       {showModal && (
@@ -275,6 +277,16 @@ const UsersManagement = () => {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ isOpen: false, user: null, action: '' })}
+        onConfirm={confirmToggleStatus}
+        title={`${confirmModal.action?.charAt(0)?.toUpperCase()}${confirmModal.action?.slice(1)} User`}
+        message={confirmModal.message}
+        confirmText={confirmModal.action?.charAt(0)?.toUpperCase() + confirmModal.action?.slice(1)}
+        type="warning"
+      />
     </div>
   );
 };

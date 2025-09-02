@@ -1,25 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useDispatch } from 'react-redux';
 import { Calendar, User, BookOpen, Clock, AlertTriangle } from 'lucide-react';
+import { showNotification } from '../../store/slices/uiSlice';
 
 const MyBooks = ({ user }) => {
+  const dispatch = useDispatch();
   const [borrowedBooks, setBorrowedBooks] = useState([]);
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
 
   const fetchMyBooks = async () => {
     setLoading(true);
     try {
       const [requestsResponse, transactionsResponse] = await Promise.all([
-        axios.get(`http://localhost:8001/user/${user.user_id}/book-requests`),
-        axios.get(`http://localhost:8001/user/${user.user_id}/transactions?status=BORROWED`)
+        axios.get(`http://localhost:8001/api/v1/user/${user.user_id}/book-requests`),
+        axios.get(`http://localhost:8001/api/v1/user/${user.user_id}/transactions?status=BORROWED`)
       ]);
       
       setBorrowedBooks(transactionsResponse.data);
       setRequests(requestsResponse.data);
     } catch (error) {
-      setMessage('Error fetching your books');
+      dispatch(showNotification({ message: 'Error fetching your books', type: 'error' }));
     } finally {
       setLoading(false);
     }
@@ -27,7 +29,7 @@ const MyBooks = ({ user }) => {
 
   const requestReturn = async (transactionId, bookTitle) => {
     try {
-      const response = await axios.post('http://localhost:8001/user/book-request', {
+      const response = await axios.post('http://localhost:8001/api/v1/user/book-request', {
         book_id: 0, // Will be ignored for return requests
         request_type: 'RETURN',
         user_id: user.user_id,
@@ -35,10 +37,10 @@ const MyBooks = ({ user }) => {
         notes: `Return request for ${bookTitle}`
       });
       
-      setMessage(response.data.message);
+      dispatch(showNotification({ message: response.data.message, type: 'success' }));
       fetchMyBooks(); // Refresh the list
     } catch (error) {
-      setMessage(error.response?.data?.detail || 'Error requesting return');
+      dispatch(showNotification({ message: error.response?.data?.detail || 'Error requesting return', type: 'error' }));
     }
   };
 
@@ -63,12 +65,6 @@ const MyBooks = ({ user }) => {
   return (
     <div className="page-content my-books">
       <h2>My Books</h2>
-      
-      {message && (
-        <div className={`alert ${message.includes('Error') ? 'alert-error' : 'alert-success'}`}>
-          {message}
-        </div>
-      )}
 
       <div className="section">
         <h3>Currently Borrowed Books</h3>
