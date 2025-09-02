@@ -8,7 +8,7 @@ const UserDashboard = () => {
   const { user } = useAuth();
 
   return (
-    <DashboardLayout menuItems={userRoutes} title="My Library">
+    <DashboardLayout menuItems={userRoutes} title="My Library" user={user}>
       <Routes>
         {userRoutes.map(route => {
           const Component = route.component;

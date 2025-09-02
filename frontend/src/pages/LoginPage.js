@@ -1,42 +1,35 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { BookOpen, User } from 'lucide-react';
+import { Formik, Form, Field, ErrorMessage } from 'formik';
 import { useAuth } from '../hooks/useAuth';
 import { authService } from '../services/authService';
+import { loginSchema } from '../utils/validationSchemas';
+import { getErrorMessage } from '../utils/errorHandler';
 import PasswordInput from '../components/common/PasswordInput';
 
 const LoginPage = () => {
-  const [credentials, setCredentials] = useState({ username: '', password: '' });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   const { login } = useAuth();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
+  const handleSubmit = async (values, { setSubmitting, setStatus }) => {
+    setStatus('');
     try {
-      const userData = await authService.login(credentials);
+      const userData = await authService.login(values);
       login(userData);
     } catch (err) {
-      if (err.response?.status === 401) {
-        setError('Invalid username or password');
-      } else if (err.code === 'NETWORK_ERROR') {
-        setError('Network error. Please check your connection.');
-      } else {
-        setError('Login failed. Please try again.');
-      }
+      const errorInfo = getErrorMessage(err);
+      setStatus(errorInfo.message);
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
-  const handleDemoLogin = (role) => {
+  const handleDemoLogin = (role, setFieldValue) => {
     const demoCredentials = role === 'admin' 
       ? { username: 'admin', password: 'admin123' }
       : { username: 'john_user', password: 'user123' };
     
-    setCredentials(demoCredentials);
+    setFieldValue('username', demoCredentials.username);
+    setFieldValue('password', demoCredentials.password);
   };
 
   return (
@@ -58,56 +51,68 @@ const LoginPage = () => {
           <p className="subtitle">Welcome back! Please sign in to continue</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="login-form">
-          <div className="form-group">
-            <label htmlFor="username">Username</label>
-            <div className="input-wrapper">
-              <User className="input-icon" size={20} />
-              <input
-                id="username"
-                type="text"
-                value={credentials.username}
-                onChange={(e) => setCredentials({...credentials, username: e.target.value})}
-                placeholder="Enter your username"
-                required
-              />
-            </div>
-          </div>
+        <Formik
+          initialValues={{ username: '', password: '' }}
+          validationSchema={loginSchema}
+          onSubmit={handleSubmit}
+        >
+          {({ isSubmitting, status, setFieldValue }) => (
+            <>
+              <Form className="login-form">
+                <div className="form-group">
+                  <label htmlFor="username">Username</label>
+                  <div className="input-wrapper">
+                    <User className="input-icon" size={20} />
+                    <Field
+                      id="username"
+                      name="username"
+                      type="text"
+                      placeholder="Enter your username"
+                    />
+                  </div>
+                  <ErrorMessage name="username" component="div" className="field-error" />
+                </div>
 
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <PasswordInput
-              value={credentials.password}
-              onChange={(e) => setCredentials({...credentials, password: e.target.value})}
-              placeholder="Enter your password"
-              required
-            />
-          </div>
+                <div className="form-group">
+                  <label htmlFor="password">Password</label>
+                  <Field name="password">
+                    {({ field }) => (
+                      <PasswordInput
+                        {...field}
+                        placeholder="Enter your password"
+                      />
+                    )}
+                  </Field>
+                  <ErrorMessage name="password" component="div" className="field-error" />
+                </div>
 
-          {error && <div className="error-message">{error}</div>}
+                {status && <div className="error-message">{status}</div>}
 
-          <button type="submit" className="login-button" disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In'}
-          </button>
-        </form>
+                <button type="submit" className="login-button" disabled={isSubmitting}>
+                  {isSubmitting ? 'Signing in...' : 'Sign In'}
+                </button>
+              </Form>
 
-        <div className="demo-section">
-          <p className="demo-text">Try demo accounts:</p>
-          <div className="demo-buttons">
-            <button 
-              onClick={() => handleDemoLogin('admin')} 
-              className="demo-button admin"
-            >
-              Admin Demo
-            </button>
-            <button 
-              onClick={() => handleDemoLogin('user')} 
-              className="demo-button user"
-            >
-              User Demo
-            </button>
-          </div>
-        </div>
+              <div className="demo-section">
+                <p className="demo-text">Try demo accounts:</p>
+                <div className="demo-buttons">
+                  <button 
+                    onClick={() => handleDemoLogin('admin', setFieldValue)} 
+                    className="demo-button admin"
+                  >
+                    Admin Demo
+                  </button>
+                  <button 
+                    onClick={() => handleDemoLogin('user', setFieldValue)} 
+                    className="demo-button user"
+                  >
+                    User Demo
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </Formik>
       </div>
     </div>
   );

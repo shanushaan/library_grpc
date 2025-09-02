@@ -200,6 +200,44 @@ body {
   transition: all 0.2s;
 }
 
+.error-message {
+  color: #dc3545;
+  font-size: 14px;
+  margin-bottom: 15px;
+  text-align: center;
+  padding: 10px;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+}
+
+.field-error {
+  color: #dc3545;
+  font-size: 12px;
+  margin-top: 5px;
+  display: block;
+}
+
+.error-boundary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  padding: 2rem;
+  text-align: center;
+}
+
+.error-boundary h2 {
+  margin: 1rem 0;
+  color: var(--text-primary);
+}
+
+.error-boundary p {
+  margin-bottom: 2rem;
+  color: var(--text-secondary);
+}
+
 /* Dashboard Layout */
 .dashboard-layout {
   display: flex;

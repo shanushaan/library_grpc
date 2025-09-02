@@ -17,6 +17,7 @@ const uiSlice = createSlice({
         id: Date.now(),
         message: action.payload.message,
         type: action.payload.type || 'info',
+        errorType: action.payload.errorType,
         autoHide: action.payload.autoHide !== false,
       };
       state.notifications.push(notification);

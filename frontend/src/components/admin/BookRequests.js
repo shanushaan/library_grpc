@@ -4,6 +4,7 @@ import { fetchBookRequests, approveBookRequest, rejectBookRequest } from '../../
 import { openRejectModal, closeRejectModal, showNotification } from '../../store/slices/uiSlice';
 import RejectModal from '../common/RejectModal';
 import DataTable from '../common/DataTable';
+import ErrorBoundary from '../common/ErrorBoundary';
 import '../../styles/BookRequests.css';
 
 const BookRequests = ({ user }) => {
@@ -92,26 +93,26 @@ const BookRequests = ({ user }) => {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="book-requests">
-      <h2>Pending Book Requests</h2>
-      
-
-
-      <DataTable
-        data={requests}
-        columns={columns}
-        keyField="request_id"
-        emptyMessage="No pending requests"
-        className="requests-table"
-      />
-      
-      <RejectModal
-        isOpen={rejectModal.isOpen}
-        onClose={() => dispatch(closeRejectModal())}
-        onConfirm={confirmReject}
-        title="Reject Book Request"
-      />
-    </div>
+    <ErrorBoundary fallbackMessage="Book requests management unavailable.">
+      <div className="book-requests">
+        <h2>Pending Book Requests</h2>
+        
+        <DataTable
+          data={requests}
+          columns={columns}
+          keyField="request_id"
+          emptyMessage="No pending requests"
+          className="requests-table"
+        />
+        
+        <RejectModal
+          isOpen={rejectModal.isOpen}
+          onClose={() => dispatch(closeRejectModal())}
+          onConfirm={confirmReject}
+          title="Reject Book Request"
+        />
+      </div>
+    </ErrorBoundary>
   );
 };
 

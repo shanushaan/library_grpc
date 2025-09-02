@@ -10,8 +10,10 @@ import UserDashboard from './pages/UserDashboard';
 import LoadingScreen from './components/common/LoadingScreen';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import NotificationContainer from './components/common/NotificationContainer';
+import ErrorBoundary from './components/common/ErrorBoundary';
 import './styles/App.css';
 import './styles/UserDashboard.css';
+import './styles/Notifications.css';
 
 const AppRoutes = () => {
   const { user, loading } = useAuth();
@@ -43,7 +45,9 @@ const AppRoutes = () => {
         path="/admin/*" 
         element={
           <ProtectedRoute requiredRole="ADMIN">
-            <AdminDashboard />
+            <ErrorBoundary fallbackMessage="Admin dashboard encountered an error.">
+              <AdminDashboard />
+            </ErrorBoundary>
           </ProtectedRoute>
         } 
       />
@@ -51,7 +55,9 @@ const AppRoutes = () => {
         path="/dashboard/*" 
         element={
           <ProtectedRoute requiredRole="USER">
-            <UserDashboard />
+            <ErrorBoundary fallbackMessage="User dashboard encountered an error.">
+              <UserDashboard />
+            </ErrorBoundary>
           </ProtectedRoute>
         } 
       />
@@ -71,16 +77,18 @@ const AppRoutes = () => {
 
 function App() {
   return (
-    <Provider store={store}>
-      <AuthProvider>
-        <Router>
-          <div className="App">
-            <AppRoutes />
-            <NotificationContainer />
-          </div>
-        </Router>
-      </AuthProvider>
-    </Provider>
+    <ErrorBoundary fallbackMessage="Application crashed. Please refresh the page.">
+      <Provider store={store}>
+        <AuthProvider>
+          <Router>
+            <div className="App">
+              <AppRoutes />
+              <NotificationContainer />
+            </div>
+          </Router>
+        </AuthProvider>
+      </Provider>
+    </ErrorBoundary>
   );
 }
 

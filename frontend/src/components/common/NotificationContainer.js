@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { removeNotification } from '../../store/slices/uiSlice';
 import { X } from 'lucide-react';
+import ErrorBoundary from './ErrorBoundary';
 import '../../styles/Notifications.css';
 
 const NotificationContainer = () => {
@@ -23,22 +24,24 @@ const NotificationContainer = () => {
   if (notifications.length === 0) return null;
 
   return (
-    <div className="notification-container">
-      {notifications.map(notification => (
-        <div 
-          key={notification.id} 
-          className={`notification ${notification.type}`}
-        >
-          <span>{notification.message}</span>
-          <button 
-            onClick={() => dispatch(removeNotification(notification.id))}
-            className="notification-close"
+    <ErrorBoundary fallbackMessage="Notification system error.">
+      <div className="notification-container">
+        {notifications.map(notification => (
+          <div 
+            key={notification.id} 
+            className={`notification ${notification.type} ${notification.errorType || ''}`}
           >
-            <X size={16} />
-          </button>
-        </div>
-      ))}
-    </div>
+            <span>{notification.message}</span>
+            <button 
+              onClick={() => dispatch(removeNotification(notification.id))}
+              className="notification-close"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        ))}
+      </div>
+    </ErrorBoundary>
   );
 };
 

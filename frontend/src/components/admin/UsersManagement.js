@@ -5,6 +5,7 @@ import { fetchUsers, createUser, updateUser, toggleUserStatus } from '../../stor
 import { showNotification } from '../../store/slices/uiSlice';
 import EnhancedDataTable from '../common/EnhancedDataTable';
 import ConfirmModal from '../common/ConfirmModal';
+import ErrorBoundary from '../common/ErrorBoundary';
 import '../../styles/UsersManagement.css';
 import '../../styles/Modal.css';
 
@@ -115,7 +116,8 @@ const UsersManagement = () => {
   };
 
   return (
-    <div className="page-content">
+    <ErrorBoundary fallbackMessage="User management unavailable.">
+      <div className="page-content">
       <div className="page-header">
         <div className="header-left">
           <h2>Library Users & Members Management</h2>
@@ -287,7 +289,8 @@ const UsersManagement = () => {
         confirmText={confirmModal.action?.charAt(0)?.toUpperCase() + confirmModal.action?.slice(1)}
         type="warning"
       />
-    </div>
+      </div>
+    </ErrorBoundary>
   );
 };
 

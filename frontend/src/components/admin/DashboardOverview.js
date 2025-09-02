@@ -5,6 +5,7 @@ import { fetchUsers } from '../../store/slices/usersSlice';
 import { fetchBooks } from '../../store/slices/booksSlice';
 import { fetchTransactions } from '../../store/slices/transactionsSlice';
 import StatCard from '../common/StatCard';
+import ErrorBoundary from '../common/ErrorBoundary';
 
 const DashboardOverview = () => {
   const dispatch = useDispatch();
@@ -44,31 +45,31 @@ const DashboardOverview = () => {
   ];
 
   return (
-    <div className="page-content dashboard-overview">
-      <div className="page-header">
-        <h2>Librarian Dashboard</h2>
-        <p>Welcome back! Here's what's happening in your library today.</p>
+    <ErrorBoundary fallbackMessage="Dashboard overview unavailable.">
+      <div className="page-content dashboard-overview">
+        <div className="page-header">
+          <h2>Librarian Dashboard</h2>
+          <p>Welcome back! Here's what's happening in your library today.</p>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="stats-grid">
+          {loading ? (
+            <div>Loading stats...</div>
+          ) : (
+            statCards.map((stat, index) => (
+              <StatCard
+                key={index}
+                label={stat.label}
+                value={stat.value}
+                icon={stat.icon}
+                color={stat.color}
+              />
+            ))
+          )}
+        </div>
       </div>
-
-      {/* Stats Cards */}
-      <div className="stats-grid">
-        {loading ? (
-          <div>Loading stats...</div>
-        ) : (
-          statCards.map((stat, index) => (
-            <StatCard
-              key={index}
-              label={stat.label}
-              value={stat.value}
-              icon={stat.icon}
-              color={stat.color}
-            />
-          ))
-        )}
-      </div>
-
-
-    </div>
+    </ErrorBoundary>
   );
 };
 
