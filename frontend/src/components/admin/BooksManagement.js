@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Search, Filter, Edit, Trash2, Eye, Book, X, UserPlus, UserMinus } from 'lucide-react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchBooks, createBook, updateBook, deleteBook } from '../../store/slices/booksSlice';
 import { showNotification } from '../../store/slices/uiSlice';
 import ConfirmModal from '../common/ConfirmModal';
 import { API_CONFIG } from '../../config/api';
@@ -11,11 +12,9 @@ import '../../styles/Modal.css';
 
 const BooksManagement = () => {
   const dispatch = useDispatch();
-  const [books, setBooks] = useState([]);
+  const { data: books, loading, genres, borrowCounts: bookBorrowCounts } = useSelector(state => state.books);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGenre, setSelectedGenre] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [genres, setGenres] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [showIssueModal, setShowIssueModal] = useState(false);
   const [showReturnModal, setShowReturnModal] = useState(false);
@@ -27,7 +26,7 @@ const BooksManagement = () => {
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
-  const [bookBorrowCounts, setBookBorrowCounts] = useState({});
+
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, bookId: null, bookTitle: '' });
   const [formData, setFormData] = useState({
     title: '',
@@ -37,35 +36,8 @@ const BooksManagement = () => {
     available_copies: ''
   });
 
-  // Fetch books from API
-  const fetchBooks = async (query = '') => {
-    setLoading(true);
-    try {
-      const [booksResponse, transactionsResponse] = await Promise.all([
-        fetch(API_CONFIG.getVersionedUrl(`/admin/books?q=${encodeURIComponent(query)}`)),
-        fetch(API_CONFIG.getVersionedUrl('/admin/transactions?status=BORROWED'))
-      ]);
-      
-      const booksData = await booksResponse.json();
-      const transactionsData = await transactionsResponse.json();
-      
-      setBooks(booksData);
-      
-      // Extract unique genres
-      const uniqueGenres = [...new Set(booksData.map(book => book.genre).filter(Boolean))];
-      setGenres(uniqueGenres);
-      
-      // Count borrowed books per book_id
-      const borrowCounts = {};
-      transactionsData.transactions.forEach(txn => {
-        borrowCounts[txn.book_id] = (borrowCounts[txn.book_id] || 0) + 1;
-      });
-      setBookBorrowCounts(borrowCounts);
-    } catch (error) {
-      console.error('Error fetching books:', error);
-    } finally {
-      setLoading(false);
-    }
+  const loadBooks = (query = '') => {
+    dispatch(fetchBooks(query));
   };
 
   // Fetch users for issue modal
@@ -91,15 +63,13 @@ const BooksManagement = () => {
     }
   };
 
-  // Load books on component mount
   useEffect(() => {
-    fetchBooks();
-  }, []);
+    loadBooks();
+  }, [dispatch]);
 
-  // Handle search
   const handleSearch = (e) => {
     e.preventDefault();
-    fetchBooks(searchQuery);
+    loadBooks(searchQuery);
   };
 
   // Filter books by genre
@@ -107,37 +77,20 @@ const BooksManagement = () => {
     ? books.filter(book => book.genre === selectedGenre)
     : books;
 
-  // Handle create/update book
   const handleSaveBook = async (e) => {
     e.preventDefault();
-    setLoading(true);
     try {
-      const url = editingBook 
-        ? API_CONFIG.getVersionedUrl(`/admin/books/${editingBook.book_id}`)
-        : API_CONFIG.getVersionedUrl('/admin/books');
-      const method = editingBook ? 'PUT' : 'POST';
-      
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          published_year: parseInt(formData.published_year) || null,
-          available_copies: parseInt(formData.available_copies) || 0
-        })
-      });
-      
-      if (response.ok) {
-        await fetchBooks();
-        handleCloseModal();
-        dispatch(showNotification({ message: `Book ${editingBook ? 'updated' : 'created'} successfully`, type: 'success' }));
+      if (editingBook) {
+        await dispatch(updateBook({ bookId: editingBook.book_id, bookData: formData })).unwrap();
+        dispatch(showNotification({ message: 'Book updated successfully', type: 'success' }));
       } else {
-        dispatch(showNotification({ message: 'Failed to save book', type: 'error' }));
+        await dispatch(createBook(formData)).unwrap();
+        dispatch(showNotification({ message: 'Book created successfully', type: 'success' }));
       }
+      handleCloseModal();
+      loadBooks();
     } catch (error) {
-      console.error('Error saving book:', error);
-    } finally {
-      setLoading(false);
+      dispatch(showNotification({ message: 'Failed to save book', type: 'error' }));
     }
   };
 
@@ -153,18 +106,10 @@ const BooksManagement = () => {
 
   const confirmDeleteBook = async () => {
     try {
-      const response = await fetch(API_CONFIG.getVersionedUrl(`/admin/books/${confirmModal.bookId}`), {
-        method: 'DELETE'
-      });
-      
-      if (response.ok) {
-        await fetchBooks();
-        dispatch(showNotification({ message: 'Book deleted successfully', type: 'success' }));
-      } else {
-        dispatch(showNotification({ message: 'Failed to delete book', type: 'error' }));
-      }
+      await dispatch(deleteBook(confirmModal.bookId)).unwrap();
+      dispatch(showNotification({ message: 'Book deleted successfully', type: 'success' }));
     } catch (error) {
-      dispatch(showNotification({ message: 'Error deleting book', type: 'error' }));
+      dispatch(showNotification({ message: 'Failed to delete book', type: 'error' }));
     }
     setConfirmModal({ isOpen: false, bookId: null, bookTitle: '' });
   };
@@ -239,7 +184,7 @@ const BooksManagement = () => {
       });
       
       if (response.ok) {
-        await fetchBooks();
+        loadBooks();
         handleCloseIssueModal();
         dispatch(showNotification({ message: 'Book issued successfully', type: 'success' }));
       } else {
@@ -288,7 +233,7 @@ const BooksManagement = () => {
       });
       
       if (response.ok) {
-        await fetchBooks();
+        loadBooks();
         handleCloseReturnModal();
         dispatch(showNotification({ message: 'Book returned successfully', type: 'success' }));
       } else {
@@ -432,7 +377,7 @@ const BooksManagement = () => {
               onClick={() => {
                 setSearchQuery('');
                 setSelectedGenre('');
-                fetchBooks();
+                loadBooks();
               }}
               className="reset-button"
             >

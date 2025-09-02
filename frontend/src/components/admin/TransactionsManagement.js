@@ -1,48 +1,26 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Search, Calendar, User, Book, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
-import { API_CONFIG } from '../../config/api';
+import { fetchTransactions } from '../../store/slices/transactionsSlice';
 import '../../styles/TransactionsManagement.css';
 
 const TransactionsManagement = () => {
-  const [transactions, setTransactions] = useState([]);
+  const dispatch = useDispatch();
+  const { data: transactions, loading, currentPage, totalPages, totalCount, limit } = useSelector(state => state.transactions);
   const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
-  const [limit] = useState(20);
 
-  const fetchTransactions = async (page = 1) => {
-    setLoading(true);
-    try {
-      const response = await fetch(API_CONFIG.getVersionedUrl(`/admin/transactions?status=${selectedStatus}&page=${page}&limit=${limit}`));
-      const data = await response.json();
-      
-      // Ensure transactions is always an array
-      const transactionsArray = Array.isArray(data.transactions) ? data.transactions : 
-                               Array.isArray(data) ? data : [];
-      
-      setTransactions(transactionsArray);
-      setCurrentPage(data.page || page);
-      setTotalPages(data.total_pages || 1);
-      setTotalCount(data.total_count || transactionsArray.length);
-    } catch (error) {
-      console.error('Error fetching transactions:', error);
-      setTransactions([]);
-    } finally {
-      setLoading(false);
-    }
+  const loadTransactions = (page = 1) => {
+    dispatch(fetchTransactions({ status: selectedStatus, page, limit }));
   };
 
   useEffect(() => {
-    setCurrentPage(1);
-    fetchTransactions(1);
-  }, [selectedStatus]);
+    loadTransactions(1);
+  }, [selectedStatus, dispatch]);
 
   useEffect(() => {
-    fetchTransactions(currentPage);
-  }, [currentPage]);
+    loadTransactions(currentPage);
+  }, [currentPage, dispatch]);
 
   const filteredTransactions = useMemo(() => {
     if (!Array.isArray(transactions)) return [];
@@ -173,7 +151,7 @@ const TransactionsManagement = () => {
         <div className="pagination">
           <button 
             className="pagination-btn" 
-            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            onClick={() => loadTransactions(Math.max(currentPage - 1, 1))}
             disabled={currentPage === 1}
           >
             <ChevronLeft size={16} />
@@ -187,7 +165,7 @@ const TransactionsManagement = () => {
           
           <button 
             className="pagination-btn" 
-            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            onClick={() => loadTransactions(Math.min(currentPage + 1, totalPages))}
             disabled={currentPage === totalPages}
           >
             Next
