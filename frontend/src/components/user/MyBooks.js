@@ -109,7 +109,7 @@ const MyBooks = ({ user }) => {
             )}
           ]}
           keyField="transaction_id"
-          emptyMessage={<div className="empty-state"><BookOpen size={48} /><p>No books currently borrowed</p></div>}
+          emptyMessage={<div className="empty-state"><BookOpen size={48} /><span>No books currently borrowed</span></div>}
         />
       </div>
 
@@ -139,7 +139,7 @@ const MyBooks = ({ user }) => {
             { key: 'notes', header: 'Notes', render: (value) => value || '-' }
           ]}
           keyField="request_id"
-          emptyMessage={<div className="empty-state"><User size={48} /><p>No requests made</p></div>}
+          emptyMessage={<div className="empty-state"><User size={48} /><span>No requests made</span></div>}
         />
       </div>
     </div>

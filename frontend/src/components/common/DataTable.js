@@ -8,7 +8,7 @@ const DataTable = ({
   className = 'data-table'
 }) => {
   if (data.length === 0) {
-    return <p>{emptyMessage}</p>;
+    return <div>{emptyMessage}</div>;
   }
 
   return (

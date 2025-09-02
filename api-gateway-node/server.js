@@ -387,9 +387,10 @@ app.get(`${API_V1}/user/:user_id/transactions`, async (req, res) => {
 app.get(`${API_V1}/user/:user_id/book-requests`, async (req, res) => {
   try {
     const userId = parseInt(req.params.user_id);
-    const [requestsResponse, booksResponse] = await Promise.all([
+    const [requestsResponse, booksResponse, transactionsResponse] = await Promise.all([
       grpcCall('GetBookRequests', { status: '' }),
-      grpcCall('GetBooks', { search_query: '' })
+      grpcCall('GetBooks', { search_query: '' }),
+      grpcCall('GetTransactions', { user_id: userId, status: '' })
     ]);
     
     const booksDict = {};
@@ -397,20 +398,44 @@ app.get(`${API_V1}/user/:user_id/book-requests`, async (req, res) => {
       booksDict[book.book_id] = book;
     });
     
+    const transactionsDict = {};
+    transactionsResponse.transactions.forEach(txn => {
+      transactionsDict[txn.transaction_id] = txn;
+    });
+    
     const userRequests = requestsResponse.requests
       .filter(req => req.user_id === userId)
       .map(req => {
-        const book = booksDict[req.book_id];
+        let book_title = 'Unknown';
+        let book_author = 'Unknown';
+        
+        if (req.request_type === 'RETURN' && req.transaction_id && req.transaction_id > 0) {
+          const transaction = transactionsDict[req.transaction_id];
+          if (transaction) {
+            const book = booksDict[transaction.book_id];
+            if (book) {
+              book_title = book.title;
+              book_author = book.author;
+            }
+          }
+        } else if (req.book_id > 0) {
+          const book = booksDict[req.book_id];
+          if (book) {
+            book_title = book.title;
+            book_author = book.author;
+          }
+        }
         return {
           request_id: req.request_id,
           user_id: req.user_id,
           book_id: req.book_id,
-          book_title: book ? book.title : 'Unknown',
-          book_author: book ? book.author : 'Unknown',
+          book_title,
+          book_author,
           request_type: req.request_type,
           status: req.status,
           request_date: req.request_date,
-          notes: req.notes
+          notes: req.notes,
+          // transaction_id: req.transaction_id || 0  // Removed for now
         };
       });
     
@@ -422,10 +447,11 @@ app.get(`${API_V1}/user/:user_id/book-requests`, async (req, res) => {
 
 app.get(`${API_V1}/admin/book-requests`, async (req, res) => {
   try {
-    const [requestsResponse, booksResponse, usersResponse] = await Promise.all([
+    const [requestsResponse, booksResponse, usersResponse, transactionsResponse] = await Promise.all([
       grpcCall('GetBookRequests', { status: 'PENDING' }),
       grpcCall('GetBooks', { search_query: '' }),
-      grpcCall('GetUsers', {})
+      grpcCall('GetUsers', {}),
+      grpcCall('GetTransactions', { user_id: 0, status: '' })
     ]);
     
     const booksDict = {};
@@ -438,16 +464,43 @@ app.get(`${API_V1}/admin/book-requests`, async (req, res) => {
       usersDict[user.user_id] = user.username;
     });
     
+    const transactionsDict = {};
+    transactionsResponse.transactions.forEach(txn => {
+      transactionsDict[txn.transaction_id] = txn;
+    });
+    
     const requests = requestsResponse.requests.map(req => {
-      const book = booksDict[req.book_id];
+      let book_title = 'Unknown';
+      let book_author = 'Unknown';
+      let available_copies = 0;
+      
+      if (req.request_type === 'RETURN' && req.transaction_id) {
+        const transaction = transactionsDict[req.transaction_id];
+        if (transaction) {
+          const book = booksDict[transaction.book_id];
+          if (book) {
+            book_title = book.title;
+            book_author = book.author;
+            available_copies = book.available_copies;
+          }
+        }
+      } else if (req.book_id > 0) {
+        const book = booksDict[req.book_id];
+        if (book) {
+          book_title = book.title;
+          book_author = book.author;
+          available_copies = book.available_copies;
+        }
+      }
+      
       return {
         request_id: req.request_id,
         user_id: req.user_id,
         user_name: usersDict[req.user_id] || `User ${req.user_id}`,
         book_id: req.book_id,
-        book_title: book ? book.title : 'Unknown',
-        book_author: book ? book.author : 'Unknown',
-        available_copies: book ? book.available_copies : 0,
+        book_title,
+        book_author,
+        available_copies,
         request_type: req.request_type,
         status: req.status,
         request_date: req.request_date,

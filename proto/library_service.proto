@@ -41,6 +41,7 @@ message BookRequest {
   string status = 5;
   string request_date = 6;
   string notes = 7;
+  int32 transaction_id = 8;
 }
 
 // Request/Response messages

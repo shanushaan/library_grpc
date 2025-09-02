@@ -344,7 +344,8 @@ class LibraryServiceImpl(library_service_pb2_grpc.LibraryServiceServicer):
                     request_type=req.request_type,
                     status=req.status,
                     request_date=req.request_date.isoformat() if req.request_date else "",
-                    notes=req.notes or ""
+                    notes=req.notes or "",
+                    transaction_id=getattr(req, 'transaction_id', 0) or 0
                 ))
             
             return library_service_pb2.GetBookRequestsResponse(requests=request_list)

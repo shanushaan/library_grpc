@@ -63,7 +63,7 @@ const EnhancedDataTable = ({
       )}
 
       {filteredData.length === 0 ? (
-        <p>{emptyMessage}</p>
+        <div>{emptyMessage}</div>
       ) : (
         <div className={`${className}-container`}>
           <table className={className}>
