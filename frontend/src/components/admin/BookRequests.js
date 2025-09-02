@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchBookRequests, approveBookRequest, rejectBookRequest } from '../../store/slices/bookRequestsSlice';
+import { fetchBookRequests, approveBookRequest, rejectBookRequest, optimisticApprove, optimisticReject } from '../../store/slices/bookRequestsSlice';
 import { openRejectModal, closeRejectModal, showNotification } from '../../store/slices/uiSlice';
 import RejectModal from '../common/RejectModal';
 import DataTable from '../common/DataTable';
@@ -10,14 +10,18 @@ const BookRequests = ({ user }) => {
   const dispatch = useDispatch();
   const { data: requests, loading } = useSelector(state => state.bookRequests);
   const { rejectModal } = useSelector(state => state.ui.modals);
-  const notifications = useSelector(state => state.ui.notifications);
 
   const handleApprove = async (requestId) => {
+    // Optimistic update
+    dispatch(optimisticApprove(requestId));
+    dispatch(showNotification({ message: 'Approving request...', type: 'info' }));
+    
     try {
       const result = await dispatch(approveBookRequest(requestId)).unwrap();
       dispatch(showNotification({ message: result.message, type: 'success' }));
     } catch (error) {
       dispatch(showNotification({ message: 'Error approving request', type: 'error' }));
+      dispatch(fetchBookRequests()); // Revert optimistic update
     }
   };
 
@@ -26,12 +30,19 @@ const BookRequests = ({ user }) => {
   };
 
   const confirmReject = async (notes) => {
+    const requestId = rejectModal.requestId;
+    
+    // Optimistic update
+    dispatch(optimisticReject(requestId));
+    dispatch(closeRejectModal());
+    dispatch(showNotification({ message: 'Rejecting request...', type: 'info' }));
+    
     try {
-      const result = await dispatch(rejectBookRequest({ requestId: rejectModal.requestId, notes })).unwrap();
+      const result = await dispatch(rejectBookRequest({ requestId, notes })).unwrap();
       dispatch(showNotification({ message: result.message, type: 'success' }));
-      dispatch(closeRejectModal());
     } catch (error) {
       dispatch(showNotification({ message: 'Error rejecting request', type: 'error' }));
+      dispatch(fetchBookRequests()); // Revert optimistic update
     }
   };
 
@@ -94,11 +105,7 @@ const BookRequests = ({ user }) => {
     <div className="book-requests">
       <h2>Pending Book Requests</h2>
       
-      {notifications.map(notification => (
-        <div key={notification.id} className={`message ${notification.type}`}>
-          {notification.message}
-        </div>
-      ))}
+
 
       <DataTable
         data={requests}

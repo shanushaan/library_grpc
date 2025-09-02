@@ -3,25 +3,30 @@ import { BookOpen, Users, Receipt, AlertCircle } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchUsers } from '../../store/slices/usersSlice';
 import { fetchBooks } from '../../store/slices/booksSlice';
+import { fetchTransactions } from '../../store/slices/transactionsSlice';
 import StatCard from '../common/StatCard';
 
 const DashboardOverview = () => {
   const dispatch = useDispatch();
   const { data: users, loading: usersLoading } = useSelector(state => state.users);
   const { data: books, loading: booksLoading } = useSelector(state => state.books);
+  const { data: transactions, loading: transactionsLoading } = useSelector(state => state.transactions);
   
-  const loading = usersLoading || booksLoading;
+  const loading = usersLoading || booksLoading || transactionsLoading;
   
   const stats = {
     totalBooks: books.length,
     activeUsers: users.filter(u => u.is_active).length,
-    borrowedBooks: 0, // TODO: Add transactions slice
-    overdueBooks: 0   // TODO: Add transactions slice
+    borrowedBooks: transactions.filter(t => t.status === 'BORROWED').length,
+    overdueBooks: transactions.filter(t => 
+      t.status === 'BORROWED' && new Date(t.due_date) < new Date()
+    ).length
   };
 
   useEffect(() => {
     dispatch(fetchUsers());
     dispatch(fetchBooks());
+    dispatch(fetchTransactions());
   }, [dispatch]);
 
   const statCards = [

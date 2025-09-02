@@ -8,6 +8,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import UserDashboard from './pages/UserDashboard';
 import LoadingScreen from './components/common/LoadingScreen';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import NotificationContainer from './components/common/NotificationContainer';
 import './styles/App.css';
 import './styles/UserDashboard.css';
 
@@ -67,6 +68,7 @@ function App() {
         <Router>
           <div className="App">
             <AppRoutes />
+            <NotificationContainer />
           </div>
         </Router>
       </AuthProvider>

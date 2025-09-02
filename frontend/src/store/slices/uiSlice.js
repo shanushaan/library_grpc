@@ -13,16 +13,28 @@ const uiSlice = createSlice({
   },
   reducers: {
     showNotification: (state, action) => {
-      state.notifications.push({
+      const notification = {
         id: Date.now(),
         message: action.payload.message,
         type: action.payload.type || 'info',
-      });
+        autoHide: action.payload.autoHide !== false,
+      };
+      state.notifications.push(notification);
+      
+      // Auto-dismiss after 5 seconds
+      if (notification.autoHide) {
+        setTimeout(() => {
+          // This will be handled by the component
+        }, 5000);
+      }
     },
     removeNotification: (state, action) => {
       state.notifications = state.notifications.filter(
         notification => notification.id !== action.payload
       );
+    },
+    clearAllNotifications: (state) => {
+      state.notifications = [];
     },
     openRejectModal: (state, action) => {
       state.modals.rejectModal = {
@@ -41,7 +53,8 @@ const uiSlice = createSlice({
 
 export const { 
   showNotification, 
-  removeNotification, 
+  removeNotification,
+  clearAllNotifications,
   openRejectModal, 
   closeRejectModal 
 } = uiSlice.actions;
