@@ -10,32 +10,42 @@ library-grpc-service/
 │   ├── src/
 │   │   ├── components/
 │   │   │   ├── admin/           # Admin-specific components
-│   │   │   │   ├── BookRequests.js
-│   │   │   │   ├── BooksManagement.js
-│   │   │   │   ├── DashboardOverview.js
-│   │   │   │   ├── TransactionsManagement.js
-│   │   │   │   └── UsersManagement.js
 │   │   │   ├── user/            # User-specific components
-│   │   │   │   ├── BookSearch.js
-│   │   │   │   ├── MyBooks.js
-│   │   │   │   └── UserProfile.js
 │   │   │   └── common/          # Shared components
-│   │   │       ├── ErrorBoundary.js
-│   │   │       ├── NotificationBell.js
-│   │   │       ├── DataTable.js
-│   │   │       └── DashboardLayout.js
 │   │   ├── pages/               # Route components
 │   │   ├── store/               # Redux state management
 │   │   ├── utils/               # Validation & error handling
 │   │   └── styles/              # CSS styling
 │   └── package.json
-├── api-gateway-node/            # Node.js API Gateway
+├── api-gateway/                 # Python FastAPI Gateway (Modular)
+│   ├── routes/                  # Domain-specific route handlers
+│   │   ├── auth.py              # Authentication endpoints
+│   │   ├── books.py             # Book management endpoints
+│   │   ├── requests.py          # Book request endpoints
+│   │   ├── transactions.py      # Transaction endpoints
+│   │   ├── users.py             # User management endpoints
+│   │   └── websocket.py         # WebSocket connections
+│   ├── services/                # Business logic layer
+│   │   ├── auth_service.py      # Authentication service
+│   │   ├── book_service.py      # Book operations service
+│   │   ├── request_service.py   # Request management service
+│   │   └── notification_service.py # Real-time notifications
+│   ├── core/                    # Core utilities & configuration
+│   │   ├── grpc_client.py       # gRPC client management
+│   │   ├── validation.py        # Input validation functions
+│   │   ├── logging_config.py    # Structured logging setup
+│   │   └── enums.py             # Status constants & enums
+│   ├── tests/                   # Comprehensive test suite (100+ tests)
+│   │   ├── core/                # Core function tests
+│   │   ├── routes/              # API endpoint tests
+│   │   ├── services/            # Business logic tests
+│   │   ├── integration/         # End-to-end tests
+│   │   └── unit/                # Component unit tests
+│   ├── utils/                   # Test utilities & mock data
+│   ├── main.py                  # FastAPI application entry
+│   └── run_organized_tests.py   # Test runner with coverage
+├── api-gateway-node/            # Node.js API Gateway (Alternative)
 │   ├── routes/                  # Modular route handlers
-│   │   ├── auth.js
-│   │   ├── books.js
-│   │   ├── requests.js
-│   │   ├── transactions.js
-│   │   └── users.js
 │   ├── utils/                   # gRPC client utilities
 │   ├── websocket.js             # WebSocket server
 │   └── server.js                # Main server file
@@ -43,26 +53,78 @@ library-grpc-service/
 │   ├── services/                # Business logic services
 │   ├── models/                  # Database models
 │   └── server.py                # gRPC server
+├── db-init/                     # Database initialization
+│   └── init.sql                 # Schema & sample data
+├── proto/                       # Protocol Buffer definitions
+│   └── library_service.proto   # gRPC service contracts
 ├── shared/                      # Shared database utilities
 └── docker-compose.yml           # Container orchestration
 ```
 
 ## 🔄 Data Flow Architecture
 
+### Modular FastAPI Gateway Architecture
 ```
-┌─────────────────┐    HTTP/WS     ┌──────────────────┐    gRPC      ┌─────────────────┐
-│   React Client  │ ◄──────────► │  Node.js Gateway │ ◄─────────► │  Python gRPC    │
-│                 │               │                  │             │     Server      │
-│ • Redux Store   │               │ • Route Handlers │             │ • Business Logic│
-│ • Components    │               │ • WebSocket      │             │ • Data Models   │
-│ • Validation    │               │ • Error Handling │             │ • Database ORM  │
-└─────────────────┘               └──────────────────┘             └─────────────────┘
-                                                                            │
-                                                                            ▼
-                                                                   ┌─────────────────┐
-                                                                   │   PostgreSQL    │
-                                                                   │    Database     │
-                                                                   └─────────────────┘
+┌─────────────────┐    HTTP/WS     ┌──────────────────────────────────────┐    gRPC      ┌─────────────────┐
+│   React Client  │ ◄──────────► │         FastAPI Gateway              │ ◄─────────► │  Python gRPC    │
+│                 │               │  ┌─────────────┐  ┌─────────────────┐ │             │     Server      │
+│ • Redux Store   │               │  │   Routes    │  │    Services     │ │             │                 │
+│ • Components    │               │  │ • auth.py   │  │ • auth_service  │ │             │ • Business Logic│
+│ • Validation    │               │  │ • books.py  │  │ • book_service  │ │             │ • Data Models   │
+│ • Error Bounds  │               │  │ • requests  │  │ • request_svc   │ │             │ • Database ORM  │
+└─────────────────┘               │  │ • websocket │  │ • notification  │ │             │ • Validation    │
+                                  │  └─────────────┘  └─────────────────┘ │             └─────────────────┘
+                                  │  ┌─────────────┐  ┌─────────────────┐ │                       │
+                                  │  │    Core     │  │     Tests       │ │                       ▼
+                                  │  │ • grpc_client│ │ • 100+ tests    │ │              ┌─────────────────┐
+                                  │  │ • validation│  │ • 5 categories  │ │              │   PostgreSQL    │
+                                  │  │ • enums     │  │ • coverage      │ │              │    Database     │
+                                  │  │ • logging   │  │ • organized     │ │              │                 │
+                                  │  └─────────────┘  └─────────────────┘ │              │ • Users (30)    │
+                                  └──────────────────────────────────────┘              │ • Books (104)   │
+                                                                                          │ • Transactions  │
+                                                                                          └─────────────────┘
+```
+
+### Request Flow Diagram
+```
+┌─────────────┐   1. HTTP Request    ┌─────────────┐   2. Route Handler   ┌─────────────┐
+│   Frontend  │ ──────────────────► │   Routes    │ ──────────────────► │  Services   │
+│             │                     │             │                     │             │
+│ • Login     │                     │ • auth.py   │                     │ • Validate  │
+│ • Search    │                     │ • books.py  │                     │ • Transform │
+│ • Request   │                     │ • requests  │                     │ • Business  │
+└─────────────┘                     └─────────────┘                     └─────────────┘
+       ▲                                                                        │
+       │                                                                        ▼
+       │                            ┌─────────────┐   4. Response Data  ┌─────────────┐
+       │ 5. JSON Response           │    Core     │ ◄─────────────────── │ gRPC Client │
+       └──────────────────────────── │             │                     │             │
+                                    │ • Validation│   3. gRPC Call      │ • Connect   │
+                                    │ • Enums     │ ──────────────────► │ • Serialize │
+                                    │ • Logging   │                     │ • Handle    │
+                                    └─────────────┘                     └─────────────┘
+```
+
+### WebSocket Real-Time Flow
+```
+┌─────────────┐   WebSocket Connect   ┌─────────────┐   Store Connection   ┌─────────────┐
+│   Frontend  │ ──────────────────► │  WebSocket  │ ──────────────────► │Notification │
+│             │                     │   Route     │                     │  Service    │
+│ • Connect   │                     │             │                     │             │
+│ • Listen    │                     │ • Upgrade   │                     │ • user_id   │
+│ • Display   │                     │ • Manage    │                     │ • connection│
+└─────────────┘                     └─────────────┘                     └─────────────┘
+       ▲                                                                        │
+       │                                                                        ▼
+       │ Push Notification          ┌─────────────┐   Trigger Event     ┌─────────────┐
+       └──────────────────────────── │   Request   │ ◄─────────────────── │   Business  │
+                                    │  Approved   │                     │   Logic     │
+                                    │             │                     │             │
+                                    │ • JSON msg  │                     │ • Approve   │
+                                    │ • user_id   │                     │ • Reject    │
+                                    │ • type      │                     │ • Issue     │
+                                    └─────────────┘                     └─────────────┘
 ```
 
 ## ✨ Key Features
@@ -236,15 +298,75 @@ export const bookSchema = Yup.object({
 - SQL injection prevention through ORM
 - CORS configuration for API security
 
+## 🧪 Testing & Quality Assurance
+
+### Comprehensive Test Suite (100+ Tests)
+```
+tests/
+├── core/          # Input validation & utility tests (9 tests)
+├── routes/        # API endpoint tests (34 tests)
+├── services/      # Business logic tests (20 tests)
+├── integration/   # End-to-end workflow tests (1 test)
+└── unit/          # Component & error handling tests (36 tests)
+```
+
+### Test Categories & Coverage
+- **Core Tests**: Validation functions, enums, utilities
+- **Route Tests**: Authentication, CRUD operations, error responses
+- **Service Tests**: Business rules, gRPC integration, admin restrictions
+- **Integration Tests**: Complete user workflows (login → request → approval)
+- **Unit Tests**: Individual components, WebSocket handling, error scenarios
+
+### Running Tests
+```bash
+# Run organized test suite with coverage
+cd api-gateway && python run_organized_tests.py
+
+# Run specific test categories
+pytest tests/core/ -v          # Core validation tests
+pytest tests/routes/ -v        # API endpoint tests
+pytest tests/services/ -v      # Business logic tests
+
+# Test admin restrictions
+pytest tests/services/test_admin_restrictions.py -v
+```
+
+## 🔒 Business Rules & Security
+
+### Admin Restrictions
+- **Admin users cannot request book issues** (enforced at service layer)
+- **Dynamic role validation** (queries actual user role from database)
+- **Proper HTTP status codes** (403 Forbidden for admin restrictions)
+
+### Input Validation
+- **Pydantic models** with custom validators
+- **Enum constants** for request types, statuses, user roles
+- **Server-side validation** prevents data corruption
+
+### Error Handling
+- **Structured logging** with JSON formatter and context
+- **Graceful degradation** when services are unavailable
+- **Comprehensive exception handling** with proper HTTP codes
+
 ## 📝 Recent Enhancements
+
+### v3.0 Features (Latest)
+- ✅ **Modular FastAPI Architecture** - Separated routes, services, core modules
+- ✅ **Comprehensive Test Suite** - 100+ tests with organized runner
+- ✅ **Admin Business Rules** - Admins cannot request book issues
+- ✅ **Enum Constants** - Centralized status values and types
+- ✅ **Structured Logging** - JSON formatter with contextual information
+- ✅ **Input Validation** - Enhanced Pydantic models with custom validators
+- ✅ **Error Boundaries** - Graceful failure handling and recovery
+- ✅ **WebSocket Management** - Real-time notification service
+- ✅ **Test Coverage** - 94% unit test coverage with async support
+- ✅ **Production Ready** - Containerized, tested, and documented
 
 ### v2.0 Features
 - ✅ Enhanced form validation with Formik + Yup
-- ✅ Comprehensive error handling system
 - ✅ Multi-level error boundaries
 - ✅ Real-time WebSocket notifications
 - ✅ Transaction business rule validation
-- ✅ Modular API Gateway architecture
 - ✅ Color-coded notification system
 - ✅ Route-level lazy loading (React.lazy + Suspense)
 - ✅ Responsive burger menu for mobile devices

@@ -9,7 +9,7 @@ export const useWebSocket = (user) => {
   useEffect(() => {
     if (!user?.user_id) return;
 
-    const wsUrl = `ws://localhost:8001?userId=${user.user_id}`;
+    const wsUrl = `${process.env.REACT_APP_WS_URL || 'ws://localhost:8001'}/?userId=${user.user_id}`;
     ws.current = new WebSocket(wsUrl);
 
     ws.current.onmessage = (event) => {

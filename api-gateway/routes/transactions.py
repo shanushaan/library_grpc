@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from core.grpc_client import get_grpc_client
+from core.enums import TransactionStatus
 import library_service_pb2
 import logging
 
@@ -18,7 +19,7 @@ async def list_transactions(user_id: int = None, status: str = ""):
     
     # Validate status if provided
     if status and status.strip():
-        valid_statuses = ["BORROWED", "RETURNED", "OVERDUE"]
+        valid_statuses = [TransactionStatus.BORROWED.value, TransactionStatus.RETURNED.value, TransactionStatus.OVERDUE.value]
         if status.upper() not in valid_statuses:
             logger.warning("Invalid status for admin transactions", extra={
                 "user_id": user_id,
@@ -75,7 +76,7 @@ async def get_user_transactions(user_id: int, status: str = ""):
     
     # Validate status if provided
     if status and status.strip():
-        valid_statuses = ["BORROWED", "RETURNED", "OVERDUE"]
+        valid_statuses = [TransactionStatus.BORROWED.value, TransactionStatus.RETURNED.value, TransactionStatus.OVERDUE.value]
         if status.upper() not in valid_statuses:
             logger.warning("Invalid status for transactions", extra={
                 "user_id": user_id,

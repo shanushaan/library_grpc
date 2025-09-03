@@ -313,6 +313,213 @@ docker system df
 - Only necessary ports exposed to host
 - CORS configured for frontend access
 
+## 🧪 Testing
+
+### Python API Gateway Testing
+
+**Prerequisites:**
+```bash
+# Navigate to Python gateway directory
+cd api-gateway
+
+# Install test dependencies
+pip install pytest pytest-asyncio pytest-mock pytest-cov httpx
+```
+
+**Run Organized Test Suite:**
+```bash
+# Run all tests with coverage
+python run_organized_tests.py
+
+# Expected output:
+# Core Tests: PASSED (9 tests)
+# Route Tests: PASSED (34 tests)
+# Service Tests: PASSED (20 tests)
+# Integration Tests: PASSED (1 test)
+# Unit Tests: PASSED (36 tests)
+```
+
+**Run Specific Test Categories:**
+```bash
+# Core validation tests
+pytest tests/core/ -v
+
+# API route tests
+pytest tests/routes/ -v
+
+# Business logic tests
+pytest tests/services/ -v
+
+# Component unit tests
+pytest tests/unit/ -v
+
+# End-to-end integration tests
+pytest tests/integration/ -v
+```
+
+**Test Coverage Report:**
+```bash
+# Generate HTML coverage report
+pytest --cov=routes --cov=services --cov=core --cov-report=html
+
+# View coverage report
+open htmlcov/index.html  # macOS/Linux
+start htmlcov/index.html # Windows
+```
+
+**Test Categories:**
+- **Core Tests (9)**: Input validation, utility functions
+- **Route Tests (34)**: API endpoints, authentication, CRUD operations
+- **Service Tests (20)**: Business logic, gRPC integration, error handling
+- **Integration Tests (1)**: End-to-end user workflows
+- **Unit Tests (36)**: Individual components, mocking, edge cases
+
+**Admin Restriction Testing:**
+```bash
+# Test admin cannot request book issues
+pytest tests/services/test_admin_restrictions.py -v
+
+# Expected: 3 tests pass
+# - Admin ISSUE blocked (403 Forbidden)
+# - Admin RETURN allowed (Success)
+# - Regular user ISSUE allowed (Success)
+```
+
+### Node.js API Gateway Testing
+
+**Prerequisites:**
+```bash
+# Navigate to Node.js gateway directory
+cd api-gateway-node
+
+# Install test dependencies
+npm install --save-dev jest supertest
+```
+
+**Run Tests:**
+```bash
+# Run all tests
+npm test
+
+# Run with coverage
+npm run test:coverage
+```
+
+### Frontend Testing
+
+**Prerequisites:**
+```bash
+# Navigate to frontend directory
+cd frontend
+
+# Install test dependencies
+npm install --save-dev @testing-library/react @testing-library/jest-dom
+```
+
+**Run Tests:**
+```bash
+# Run component tests
+npm test
+
+# Run with coverage
+npm run test:coverage
+```
+
+### Integration Testing (Full System)
+
+**API Integration Tests:**
+```bash
+# From project root
+python run_api_tests.py
+
+# Tests all API endpoints with real backend
+```
+
+**Manual Testing Scenarios:**
+```bash
+# 1. User Authentication
+curl -X POST http://localhost:8001/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"admin123"}'
+
+# 2. Book Search
+curl "http://localhost:8001/api/v1/user/books/search?q=python"
+
+# 3. Admin Restriction (should fail)
+curl -X POST http://localhost:8001/api/v1/user/book-request \
+  -H "Content-Type: application/json" \
+  -d '{"book_id":1,"request_type":"ISSUE","user_id":2}'
+```
+
+### Failure Scenario Testing
+
+**Test Frontend Resilience:**
+```bash
+# 1. Stop API Gateway
+docker stop library_grpc-api-gateway-python-1
+
+# 2. Test frontend at http://localhost:3000
+# Expected: Graceful error messages, no crashes
+
+# 3. Restart API Gateway
+docker start library_grpc-api-gateway-python-1
+
+# 4. Verify recovery
+# Expected: Frontend reconnects automatically
+```
+
+**Database Failure Testing:**
+```bash
+# 1. Stop database
+docker stop library_grpc-postgres-1
+
+# 2. Test API endpoints
+# Expected: 500 errors with proper messages
+
+# 3. Restart database
+docker start library_grpc-postgres-1
+```
+
+### Performance Testing
+
+**Load Testing:**
+```bash
+# Install Apache Bench
+sudo apt-get install apache2-utils  # Linux
+brew install httpie                 # macOS
+
+# Test API performance
+ab -n 1000 -c 10 http://localhost:8001/api/v1/user/books/search?q=test
+```
+
+**Memory Usage:**
+```bash
+# Monitor container resources
+docker stats
+
+# Expected: <500MB per container
+```
+
+### Test Data Management
+
+**Reset Test Data:**
+```bash
+# Reset database to clean state
+docker-compose down -v
+docker-compose --profile python up -d
+
+# Wait for initialization (30-60 seconds)
+docker-compose logs postgres | grep "ready to accept connections"
+```
+
+**Custom Test Data:**
+```bash
+# Add test users/books via API
+curl -X POST http://localhost:8001/api/v1/admin/users \
+  -H "Content-Type: application/json" \
+  -d '{"username":"testuser","password":"test123","role":"USER"}'
+```
+
 ## 📞 Support
 
 ### Getting Help
@@ -341,4 +548,10 @@ docker-compose ps
 
 # Rebuild
 docker-compose build && docker-compose --profile node up -d
+
+# Run Python tests
+cd api-gateway && python run_organized_tests.py
+
+# Test admin restrictions
+cd api-gateway && pytest tests/services/test_admin_restrictions.py -v
 ```

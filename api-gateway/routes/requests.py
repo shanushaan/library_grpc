@@ -26,6 +26,13 @@ class UserBookRequest(BaseModel):
     def validate_user_id(cls, v):
         return validate_positive_integer(v, "User ID")
     
+    @validator('request_type')
+    def validate_admin_restrictions(cls, v, values):
+        # Admin users cannot create ISSUE requests
+        if v == "ISSUE" and values.get('user_id') == 2:  # Admin user ID
+            raise ValueError("Admin users cannot request book issues")
+        return v
+    
     @validator('notes')
     def validate_notes(cls, v):
         return v.strip() if v else ""

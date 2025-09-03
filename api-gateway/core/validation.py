@@ -1,4 +1,5 @@
 import re
+from core.enums import RequestType, UserRole
 
 # Validation functions
 def validate_positive_integer(value: int, field_name: str) -> int:
@@ -19,7 +20,12 @@ def validate_password(password: str) -> str:
     return password
 
 def validate_request_type(request_type: str) -> str:
-    valid_types = ["ISSUE", "RETURN"]
+    valid_types = [RequestType.ISSUE.value, RequestType.RETURN.value]
     if request_type.upper() not in valid_types:
         raise ValueError(f"Request type must be one of: {', '.join(valid_types)}")
     return request_type.upper()
+
+def validate_admin_request_restrictions(user_role: str, request_type: str) -> None:
+    """Validate admin users cannot create ISSUE requests"""
+    if user_role == UserRole.ADMIN.value and request_type == RequestType.ISSUE.value:
+        raise ValueError("Admin users cannot request book issues")

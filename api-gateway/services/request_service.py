@@ -4,6 +4,7 @@ import library_service_pb2_grpc
 from fastapi import HTTPException
 import logging
 import asyncio
+from core.enums import RequestType, RequestStatus, UserRole
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,13 @@ class RequestService:
         })
         
         try:
+            # Check if user is admin and trying to create ISSUE request
+            if request_type == RequestType.ISSUE.value:
+                user_response = await self.client.GetUsers(library_service_pb2.GetUsersRequest())
+                for user in user_response.users:
+                    if user.user_id == user_id and user.role == UserRole.ADMIN.value:
+                        raise HTTPException(status_code=403, detail="Admin users cannot request book issues")
+            
             logger.debug("Sending book request to gRPC server", extra={
                 "user_id": user_id,
                 "book_id": book_id,
@@ -61,6 +69,8 @@ class RequestService:
                 })
                 raise HTTPException(status_code=400, detail=response.message)
                 
+        except HTTPException:
+            raise
         except grpc.RpcError as e:
             logger.error("gRPC service error during book request", extra={
                 "user_id": user_id,
@@ -90,7 +100,7 @@ class RequestService:
         try:
             logger.debug("Fetching concurrent data: requests, books, users")
             # Get all data concurrently
-            requests_task = self.client.GetBookRequests(library_service_pb2.GetBookRequestsReq(status="PENDING"))
+            requests_task = self.client.GetBookRequests(library_service_pb2.GetBookRequestsReq(status=RequestStatus.PENDING.value))
             books_task = self.client.GetBooks(library_service_pb2.GetBooksRequest(search_query=""))
             users_task = self.client.GetUsers(library_service_pb2.GetUsersRequest())
             
@@ -183,7 +193,7 @@ class RequestService:
                     book_title = "Unknown"
                     book_author = "Unknown"
                     
-                    if req.request_type == "RETURN" and req.transaction_id and req.transaction_id > 0:
+                    if req.request_type == RequestType.RETURN.value and req.transaction_id and req.transaction_id > 0:
                         # Use transaction_id to get book details for return requests
                         transaction = transactions_dict.get(req.transaction_id)
                         if transaction:

@@ -78,13 +78,45 @@ def run_organized_tests():
     for category, status in results:
         print(f"{category}: {status}")
     
+    # Run gRPC server tests
+    print(f"\nRunning gRPC Server Tests...")
+    print("-" * 40)
+    try:
+        grpc_server_dir = os.path.join(os.path.dirname(api_gateway_dir), "grpc-server")
+        if os.path.exists(grpc_server_dir):
+            result = subprocess.run([
+                sys.executable, "run_tests.py"
+            ], cwd=grpc_server_dir, check=False, capture_output=True, text=True)
+            
+            if result.returncode == 0:
+                print("PASS: gRPC Server Tests")
+                results.append(("gRPC Server Tests", "PASSED"))
+            else:
+                print("FAIL: gRPC Server Tests")
+                results.append(("gRPC Server Tests", "FAILED"))
+                if result.stdout:
+                    print("STDOUT:", result.stdout[-500:])
+        else:
+            print("SKIP: gRPC server directory not found")
+            results.append(("gRPC Server Tests", "SKIPPED"))
+    except Exception as e:
+        print(f"ERROR: gRPC Server Tests: {e}")
+        results.append(("gRPC Server Tests", "ERROR"))
+    
     print(f"\nTest Organization:")
+    print("FastAPI Gateway:")
     print("- tests/core/: Validation and utility tests")
     print("- tests/services/: Business logic tests") 
     print("- tests/routes/: API endpoint tests")
     print("- tests/integration/: End-to-end flow tests")
     print("- tests/unit/: Individual component tests")
     print("- utils/: Test helpers and mock data")
+    print("gRPC Server:")
+    print("- tests/test_auth_service.py: Authentication domain tests")
+    print("- tests/test_book_service.py: Book management tests")
+    print("- tests/test_transaction_service.py: Transaction operation tests")
+    print("- tests/test_request_service.py: Request workflow tests")
+    print("- tests/test_user_service.py: User management tests")
 
 if __name__ == "__main__":
     run_organized_tests()

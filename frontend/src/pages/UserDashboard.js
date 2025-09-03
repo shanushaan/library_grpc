@@ -3,9 +3,11 @@ import { Routes, Route } from 'react-router-dom';
 import DashboardLayout from '../components/common/DashboardLayout';
 import { userRoutes } from '../config/routes';
 import { useAuth } from '../hooks/useAuth';
+import { useWebSocket } from '../hooks/useWebSocket';
 
 const UserDashboard = () => {
   const { user } = useAuth();
+  useWebSocket(user);
 
   return (
     <DashboardLayout menuItems={userRoutes} title="My Library" user={user}>

@@ -8,7 +8,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from shared.models import User, Book, Transaction, BookRequest
 from shared.database import SessionLocal, engine
-from services.library_service import LibraryServiceImpl
+from services.library_service_main import LibraryServiceImpl
 
 # Import pre-generated proto files
 import library_service_pb2_grpc

@@ -46,7 +46,7 @@ services:
       GRPC_SERVER_PORT: 50051
     depends_on:
       - grpc-server
-    command: python api-gateway/gateway_async.py
+    command: python api-gateway/gateway.py
     profiles:
       - python
 

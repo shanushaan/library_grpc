@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
 import { Lock, Eye, EyeOff } from 'lucide-react';
 
-const PasswordInput = ({ value, onChange, placeholder = "Enter your password", required = false }) => {
+const PasswordInput = ({ placeholder = "Enter your password", required = false, ...props }) => {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
     <div className="input-wrapper">
       <Lock className="input-icon" size={20} />
       <input
+        {...props}
         type={showPassword ? 'text' : 'password'}
-        value={value}
-        onChange={onChange}
         placeholder={placeholder}
         required={required}
       />

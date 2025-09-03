@@ -6,11 +6,16 @@ import os
 import logging
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
+sys.path.append(os.path.dirname(__file__))
 
-from shared.models import User, Book, Transaction, BookRequest
-from shared.database import SessionLocal
+from connection_pool import db_pool
 import library_service_pb2
 import library_service_pb2_grpc
+from services.auth_service import AuthService
+from services.book_service import BookService
+from services.transaction_service import TransactionService
+from services.request_service import RequestService
+from services.user_service import UserService
 
 # Configure structured JSON logging
 import json
@@ -40,92 +45,111 @@ logger.propagate = False
 
 class LibraryServiceImpl(library_service_pb2_grpc.LibraryServiceServicer):
     
+    def __init__(self):
+        # Initialize connection pool
+        db_pool.initialize_pool()
+        # Initialize domain services
+        self.auth_service = AuthService()
+        self.book_service = BookService()
+        self.transaction_service = TransactionService()
+        self.request_service = RequestService()
+        self.user_service = UserService()
+    
     def AuthenticateUser(self, request, context):
         logger.info("Authentication attempt", extra={"username": request.username, "method": "AuthenticateUser"})
-        db = SessionLocal()
         try:
-            password_hash = hashlib.sha256(request.password.encode()).hexdigest()
-            user = db.query(User).filter(
-                User.username == request.username,
-                User.password_hash == password_hash,
-                User.is_active.is_(True)
-            ).first()
+            with db_pool.get_connection() as conn:
+                with conn.cursor() as cursor:
+                password_hash = hashlib.sha256(request.password.encode()).hexdigest()
+                cursor.execute(
+                    "SELECT user_id, username, email, role, is_active FROM users WHERE username = %s AND password_hash = %s AND is_active = true",
+                    (request.username, password_hash)
+                )
+                user_data = cursor.fetchone()
             
-            if user:
-                user.last_login = datetime.utcnow()
-                db.commit()
-                logger.info("Authentication successful", extra={"username": request.username, "role": user.role, "user_id": user.user_id})
-                
-                return library_service_pb2.AuthResponse(
-                    success=True,
-                    user=library_service_pb2.User(
-                        user_id=user.user_id,
-                        username=user.username,
-                        email=user.email,
-                        role=user.role,
-                        is_active=user.is_active
-                    ),
-                    message="Authentication successful"
-                )
-            else:
-                logger.warning("Authentication failed", extra={"username": request.username, "reason": "invalid_credentials"})
-                return library_service_pb2.AuthResponse(
-                    success=False,
-                    message="Invalid credentials"
-                )
+                if user_data:
+                    cursor.execute(
+                        "UPDATE users SET last_login = %s WHERE user_id = %s",
+                        (datetime.utcnow(), user_data[0])
+                    )
+                    conn.commit()
+                    logger.info("Authentication successful", extra={"username": request.username, "role": user_data[3], "user_id": user_data[0]})
+                    
+                    return library_service_pb2.AuthResponse(
+                        success=True,
+                        user=library_service_pb2.User(
+                            user_id=user_data[0],
+                            username=user_data[1],
+                            email=user_data[2],
+                            role=user_data[3],
+                            is_active=user_data[4]
+                        ),
+                        message="Authentication successful"
+                    )
+                else:
+                    logger.warning("Authentication failed", extra={"username": request.username, "reason": "invalid_credentials"})
+                    return library_service_pb2.AuthResponse(
+                        success=False,
+                        message="Invalid credentials"
+                    )
         except Exception as e:
             logger.error("Error during authentication", extra={"username": request.username, "error": str(e), "error_type": "database_error"})
             raise
-        finally:
-            db.close()
     
     def GetBooks(self, request, context):
-        db = SessionLocal()
         try:
-            query = db.query(Book).filter(Book.is_deleted.is_(False))
-            if request.search_query:
-                query = query.filter(
-                    (Book.title.ilike(f"%{request.search_query}%")) |
-                    (Book.author.ilike(f"%{request.search_query}%")) |
-                    (Book.genre.ilike(f"%{request.search_query}%"))
-                )
-            
-            books = query.all()
-            book_list = []
-            
-            for book in books:
-                book_list.append(library_service_pb2.Book(
-                    book_id=book.book_id,
-                    title=book.title,
-                    author=book.author or "",
-                    genre=book.genre or "",
-                    published_year=book.published_year or 0,
-                    available_copies=book.available_copies,
-                    is_deleted=book.is_deleted or False
-                ))
-            
-            return library_service_pb2.GetBooksResponse(books=book_list)
-        finally:
-            db.close()
+            with db_pool.get_connection() as conn:
+                with conn.cursor() as cursor:
+                    if request.search_query:
+                        cursor.execute(
+                            "SELECT book_id, title, author, genre, published_year, available_copies, is_deleted FROM books WHERE is_deleted = false AND (title ILIKE %s OR author ILIKE %s OR genre ILIKE %s)",
+                            (f"%{request.search_query}%", f"%{request.search_query}%", f"%{request.search_query}%")
+                        )
+                    else:
+                        cursor.execute(
+                            "SELECT book_id, title, author, genre, published_year, available_copies, is_deleted FROM books WHERE is_deleted = false"
+                        )
+                    
+                    books_data = cursor.fetchall()
+                    book_list = []
+                    
+                    for book_data in books_data:
+                        book_list.append(library_service_pb2.Book(
+                            book_id=book_data[0],
+                            title=book_data[1],
+                            author=book_data[2] or "",
+                            genre=book_data[3] or "",
+                            published_year=book_data[4] or 0,
+                            available_copies=book_data[5],
+                            is_deleted=book_data[6] or False
+                        ))
+                    
+                    return library_service_pb2.GetBooksResponse(books=book_list)
+        except Exception as e:
+            logger.error(f"Error fetching books: {e}")
+            raise
     
     def GetUsers(self, request, context):
-        db = SessionLocal()
         try:
-            users = db.query(User).all()
-            user_list = []
-            
-            for user in users:
-                user_list.append(library_service_pb2.User(
-                    user_id=user.user_id,
-                    username=user.username,
-                    email=user.email,
-                    role=user.role,
-                    is_active=user.is_active
-                ))
-            
-            return library_service_pb2.GetUsersResponse(users=user_list)
-        finally:
-            db.close()
+            with db_pool.get_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute("SELECT user_id, username, email, role, is_active FROM users")
+                    users_data = cursor.fetchall()
+                    user_list = []
+                    
+                    for user_data in users_data:
+                        user_list.append(library_service_pb2.User(
+                            user_id=user_data[0],
+                            username=user_data[1],
+                            email=user_data[2],
+                            role=user_data[3],
+                            is_active=user_data[4]
+                        ))
+                    
+                    return library_service_pb2.GetUsersResponse(users=user_list)
+        except Exception as e:
+            logger.error(f"Error fetching users: {e}")
+            raise
     
     def GetTransactions(self, request, context):
         db = SessionLocal()
@@ -290,41 +314,41 @@ class LibraryServiceImpl(library_service_pb2_grpc.LibraryServiceServicer):
     
     def CreateUserBookRequest(self, request, context):
         logger.info("Creating book request", extra={"user_id": request.user_id, "book_id": request.book_id, "request_type": request.request_type, "method": "CreateUserBookRequest"})
-        db = SessionLocal()
         try:
-            book_request = BookRequest(
-                user_id=request.user_id,
-                book_id=request.book_id,
-                request_type=request.request_type,
-                status='PENDING',
-                notes=request.notes,
-                transaction_id=request.transaction_id if request.transaction_id else None
-            )
-            
-            db.add(book_request)
-            db.commit()
-            logger.info("Book request created successfully", extra={"request_id": book_request.request_id, "user_id": request.user_id, "book_id": request.book_id})
-            
-            return library_service_pb2.BookRequestResponse(
-                success=True,
-                request=library_service_pb2.BookRequest(
-                    request_id=book_request.request_id,
-                    user_id=book_request.user_id,
-                    book_id=book_request.book_id,
-                    request_type=book_request.request_type,
-                    status=book_request.status
-                ),
-                message="Request created successfully"
-            )
-        except Exception as e:
-            logger.error("Error creating book request", extra={"user_id": request.user_id, "book_id": request.book_id, "error": str(e), "error_type": "database_error"})
-            db.rollback()
+            with db_pool.get_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute(
+                        "INSERT INTO book_requests (user_id, book_id, request_type, status, notes, transaction_id) VALUES (%s, %s, %s, %s, %s, %s) RETURNING request_id",
+                        (request.user_id, request.book_id, request.request_type, 'PENDING', request.notes, request.transaction_id if request.transaction_id else None)
+                    )
+                    request_id = cursor.fetchone()[0]
+                    conn.commit()
+                    
+                    logger.info("Book request created successfully", extra={"request_id": request_id, "user_id": request.user_id, "book_id": request.book_id})
+                    
+                    return library_service_pb2.BookRequestResponse(
+                        success=True,
+                        request=library_service_pb2.BookRequest(
+                            request_id=request_id,
+                            user_id=request.user_id,
+                            book_id=request.book_id,
+                            request_type=request.request_type,
+                            status='PENDING'
+                        ),
+                        message="Request created successfully"
+                    )
+        except psycopg2.DatabaseError as e:
+            logger.error("Database error creating book request", extra={"user_id": request.user_id, "book_id": request.book_id, "error": str(e), "error_type": "database_error"})
             return library_service_pb2.BookRequestResponse(
                 success=False,
-                message=str(e)
+                message="Database error occurred"
             )
-        finally:
-            db.close()
+        except Exception as e:
+            logger.error("Error creating book request", extra={"user_id": request.user_id, "book_id": request.book_id, "error": str(e), "error_type": "unexpected_error"})
+            return library_service_pb2.BookRequestResponse(
+                success=False,
+                message="Internal server error"
+            )
     
     def GetBookRequests(self, request, context):
         db = SessionLocal()
