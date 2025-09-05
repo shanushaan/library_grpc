@@ -5,6 +5,7 @@ import { fetchBooks, createBook, updateBook, deleteBook } from '../../store/slic
 import { showNotification } from '../../store/slices/uiSlice';
 import ConfirmModal from '../common/ConfirmModal';
 import EnhancedDataTable from '../common/EnhancedDataTable';
+import axios from 'axios';
 import { API_CONFIG } from '../../config/api';
 import '../../styles/BookCatalog.css';
 import '../../styles/AdminBooks.css';
@@ -42,9 +43,8 @@ const BooksManagement = () => {
   // Fetch users for issue modal
   const fetchUsers = async () => {
     try {
-      const response = await fetch(API_CONFIG.getVersionedUrl('/admin/users'));
-      const data = await response.json();
-      setUsers(data.filter(user => user.is_active && user.role === 'USER'));
+      const response = await axios.get(API_CONFIG.getVersionedUrl('/admin/users'));
+      setUsers(response.data.filter(user => user.is_active && user.role === 'USER'));
     } catch (error) {
       console.error('Error fetching users:', error);
     }
@@ -53,9 +53,8 @@ const BooksManagement = () => {
   // Fetch borrowed transactions for return modal
   const fetchBorrowedTransactions = async (bookId) => {
     try {
-      const response = await fetch(API_CONFIG.getVersionedUrl('/admin/transactions?status=BORROWED'));
-      const data = await response.json();
-      const bookTransactions = data.transactions.filter(txn => txn.book_id === bookId);
+      const response = await axios.get(API_CONFIG.getVersionedUrl('/admin/transactions?status=BORROWED'));
+      const bookTransactions = response.data.transactions.filter(txn => txn.book_id === bookId);
       setBorrowedTransactions(bookTransactions);
     } catch (error) {
       console.error('Error fetching borrowed transactions:', error);
@@ -165,24 +164,17 @@ const BooksManagement = () => {
     
     setLoading(true);
     try {
-      const response = await fetch(API_CONFIG.getVersionedUrl('/admin/issue-book'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          book_id: issuingBook.book_id,
-          user_id: selectedUser.user_id
-        })
+      await axios.post(API_CONFIG.getVersionedUrl('/admin/issue-book'), {
+        book_id: issuingBook.book_id,
+        user_id: selectedUser.user_id
       });
       
-      if (response.ok) {
-        loadBooks();
-        handleCloseIssueModal();
-        dispatch(showNotification({ message: 'Book issued successfully', type: 'success' }));
-      } else {
-        dispatch(showNotification({ message: 'Failed to issue book', type: 'error' }));
-      }
+      loadBooks();
+      handleCloseIssueModal();
+      dispatch(showNotification({ message: 'Book issued successfully', type: 'success' }));
     } catch (error) {
       console.error('Error issuing book:', error);
+      dispatch(showNotification({ message: 'Failed to issue book', type: 'error' }));
     } finally {
       setLoading(false);
     }
@@ -215,23 +207,16 @@ const BooksManagement = () => {
     
     setLoading(true);
     try {
-      const response = await fetch(API_CONFIG.getVersionedUrl('/admin/return-book'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          transaction_id: selectedTransaction.transaction_id
-        })
+      await axios.post(API_CONFIG.getVersionedUrl('/admin/return-book'), {
+        transaction_id: selectedTransaction.transaction_id
       });
       
-      if (response.ok) {
-        loadBooks();
-        handleCloseReturnModal();
-        dispatch(showNotification({ message: 'Book returned successfully', type: 'success' }));
-      } else {
-        dispatch(showNotification({ message: 'Failed to return book', type: 'error' }));
-      }
+      loadBooks();
+      handleCloseReturnModal();
+      dispatch(showNotification({ message: 'Book returned successfully', type: 'success' }));
     } catch (error) {
       console.error('Error returning book:', error);
+      dispatch(showNotification({ message: 'Failed to return book', type: 'error' }));
     } finally {
       setLoading(false);
     }

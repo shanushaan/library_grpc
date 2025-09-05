@@ -7,6 +7,7 @@ import { fetchBookRequests } from './store/slices/bookRequestsSlice';
 import { lazy, Suspense } from 'react';
 import LoginPage from './pages/LoginPage';
 import LoadingScreen from './components/common/LoadingScreen';
+import { CSRFProtection } from './components/common/CSRFProtection';
 
 // Lazy load dashboard components
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
@@ -87,12 +88,14 @@ function App() {
     <ErrorBoundary fallbackMessage="Application crashed. Please refresh the page.">
       <Provider store={store}>
         <AuthProvider>
-          <Router>
-            <div className="App">
-              <AppRoutes />
-              <NotificationContainer />
-            </div>
-          </Router>
+          <CSRFProtection>
+            <Router>
+              <div className="App">
+                <AppRoutes />
+                <NotificationContainer />
+              </div>
+            </Router>
+          </CSRFProtection>
         </AuthProvider>
       </Provider>
     </ErrorBoundary>

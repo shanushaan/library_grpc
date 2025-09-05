@@ -3,6 +3,7 @@ import { useDispatch } from 'react-redux';
 import { Book, Filter } from 'lucide-react';
 import { showNotification } from '../../store/slices/uiSlice';
 import { incrementPendingCount } from '../../store/slices/bookRequestsSlice';
+import axios from 'axios';
 import { API_CONFIG } from '../../config/api';
 import EnhancedDataTable from '../common/EnhancedDataTable';
 import '../../styles/BookCatalog.css';
@@ -17,12 +18,11 @@ const BookCatalog = ({ user }) => {
   const fetchBooks = async (query = '') => {
     setLoading(true);
     try {
-      const response = await fetch(API_CONFIG.getVersionedUrl(`/user/books/search?q=${encodeURIComponent(query)}`));
-      const data = await response.json();
-      setBooks(data);
+      const response = await axios.get(API_CONFIG.getVersionedUrl(`/user/books/search?q=${encodeURIComponent(query)}`));
+      setBooks(response.data);
       
       // Extract unique genres
-      const uniqueGenres = [...new Set(data.map(book => book.genre).filter(Boolean))];
+      const uniqueGenres = [...new Set(response.data.map(book => book.genre).filter(Boolean))];
       setGenres(uniqueGenres);
     } catch (error) {
       console.error('Error fetching books:', error);
@@ -40,35 +40,22 @@ const BookCatalog = ({ user }) => {
   // Request book function
   const requestBook = async (bookId) => {
     try {
-      const response = await fetch(API_CONFIG.getVersionedUrl('/user/book-request'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          book_id: bookId,
-          request_type: 'ISSUE',
-          user_id: user.user_id,
-          notes: 'Book request from catalog'
-        })
+      await axios.post(API_CONFIG.getVersionedUrl('/user/book-request'), {
+        book_id: bookId,
+        request_type: 'ISSUE',
+        user_id: user.user_id,
+        notes: 'Book request from catalog'
       });
       
-      if (response.ok) {
-        dispatch(showNotification({ 
-          message: 'Book request submitted successfully!', 
-          type: 'success' 
-        }));
-        dispatch(incrementPendingCount());
-      } else {
-        dispatch(showNotification({ 
-          message: 'Failed to submit book request', 
-          type: 'error' 
-        }));
-      }
+      dispatch(showNotification({ 
+        message: 'Book request submitted successfully!', 
+        type: 'success' 
+      }));
+      dispatch(incrementPendingCount());
     } catch (error) {
       console.error('Error requesting book:', error);
       dispatch(showNotification({ 
-        message: 'Error submitting request', 
+        message: 'Failed to submit book request', 
         type: 'error' 
       }));
     }
